@@ -1,5 +1,6 @@
 # ExZample
 
+![Hex.pm](https://img.shields.io/hexpm/v/ex_zample)
 ![CircleCI](https://img.shields.io/circleci/build/github/ulissesalmeida/ex_zample)
 ![Coveralls](https://img.shields.io/coveralls/github/ulissesalmeida/ex_zample)
 
