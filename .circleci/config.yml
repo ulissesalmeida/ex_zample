@@ -1,0 +1,166 @@
+# Elixir CircleCI 2.1 configuration file
+version: 2.1
+aliases:
+  elixir_parameter: &elixir_parameter
+    elixir_version:
+      description: "Elixir version"
+      type: string
+      default: "1.10"
+commands:
+  save_deps:
+    description: "Cache dependencies"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - save_cache:
+          key: v1-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          paths:
+            - deps
+            - _build
+      - save_cache:
+          key: v1-deps-<< parameters.elixir_version >>
+          paths:
+            - deps
+            - _build
+
+  restore_deps:
+    description: "Restore dependencies cache"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - restore_cache:
+          keys:
+            - v1-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v1-deps-<< parameters.elixir_version >>
+
+  save_app:
+    description: "Cache compiled build"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - save_cache:
+          key: v1-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          paths:
+            - _build
+      - save_cache:
+          key: v1-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          paths:
+            - _build
+      - save_cache:
+          key: v1-app-<< parameters.elixir_version >>
+          paths:
+            - _build
+
+  restore_app:
+    description: "Restore compiled build cache"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - restore_cache:
+          keys:
+            - v1-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v1-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v1-app-<< parameters.elixir_version >>
+
+  save_plt:
+    description: "Cache dialyzer plt"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - save_cache:
+          key: v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          paths:
+            - _build
+            - ~/.mix
+      - save_cache:
+          key: v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          paths:
+            - _build
+            - ~/.mix
+      - save_cache:
+          key: v1-plt-<< parameters.elixir_version >>
+          paths:
+            - _build
+            - ~/.mix
+
+  restore_plt:
+    description: "Restore dialyzer plt cache"
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - restore_cache:
+          keys:
+            - v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v1-plt-<< parameters.elixir_version >>
+  test:
+    parameters:
+      <<: *elixir_parameter
+    steps:
+      - restore_app:
+          elixir_version: << parameters.elixir_version >>
+      - run: mix test
+      - save_app:
+          elixir_version: << parameters.elixir_version >>
+jobs:
+  build:
+    parameters:
+      <<: *elixir_parameter
+      steps:
+        description: "Steps to execute after build"
+        type: steps
+    docker:
+      - image: circleci/elixir:<< parameters.elixir_version >>
+    environment:
+      MIX_ENV: test
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run: mix local.hex --force
+      - run: mix local.rebar --force
+      - restore_deps:
+          elixir_version: << parameters.elixir_version >>
+      - run: mix do deps.get, deps.compile
+      - save_deps:
+          elixir_version: << parameters.elixir_version >>
+      - steps: << parameters.steps >>
+workflows:
+  version: 2
+  test:
+    jobs:
+      - build:
+          name: "Elixir 1.10"
+          steps:
+            - restore_app
+            - run: mix format --check-formatted
+            - run: mix credo --strict
+            - run: mix coveralls.circle
+            - save_app
+            - restore_plt
+            - run: mix dialyzer --plt
+            - save_plt
+            - run: mix dialyzer
+      - build:
+          name: "Elixir 1.9"
+          elixir_version: "1.9"
+          steps:
+            - test:
+                elixir_version: "1.9"
+      - build:
+          name: "Elixir 1.8"
+          elixir_version: "1.8"
+          steps:
+            - test:
+                elixir_version: "1.8"
+      - build:
+          name: "Elixir 1.7"
+          elixir_version: "1.7"
+          steps:
+            - test:
+                elixir_version: "1.7"
+      - build:
+          name: "Elixir 1.6"
+          elixir_version: "1.6"
+          steps:
+            - test:
+                elixir_version: "1.6"
