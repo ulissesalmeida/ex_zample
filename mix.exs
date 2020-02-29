@@ -18,7 +18,8 @@ defmodule ExZample.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ]
+      ],
+      elixirc_paths: elixirc_paths(Mix.env())
     ]
   end
 
@@ -60,4 +61,7 @@ defmodule ExZample.MixProject do
       extras: ["README.md"]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
