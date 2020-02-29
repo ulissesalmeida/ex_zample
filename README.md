@@ -1,5 +1,7 @@
 # ExZample
 
+[![Coverage Status](https://coveralls.io/repos/github/ulissesalmeida/ex_zample/badge.svg?branch=master)](https://coveralls.io/github/ulissesalmeida/ex_zample?branch=master)
+
 A scalable error-friendly factories for your Elixir apps
 
 ## Installation
