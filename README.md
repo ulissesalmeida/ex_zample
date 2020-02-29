@@ -1,8 +1,8 @@
 # ExZample
 
-![Hex.pm](https://img.shields.io/hexpm/v/ex_zample)
-![CircleCI](https://img.shields.io/circleci/build/github/ulissesalmeida/ex_zample)
-![Coveralls](https://img.shields.io/coveralls/github/ulissesalmeida/ex_zample)
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_zample)](https://www.hex.pm/packages/ex_zample)
+[![CircleCI](https://img.shields.io/circleci/build/github/ulissesalmeida/ex_zample)](https://circleci.com/gh/ulissesalmeida/ex_zample/tree/master)
+[![Coveralls](https://img.shields.io/coveralls/github/ulissesalmeida/ex_zample)](https://coveralls.io/github/ulissesalmeida/ex_zample?branch=master)
 
 A scalable error-friendly factories for your Elixir apps
 
