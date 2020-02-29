@@ -1,6 +1,7 @@
 # ExZample
 
-[![Coverage Status](https://coveralls.io/repos/github/ulissesalmeida/ex_zample/badge.svg?branch=master)](https://coveralls.io/github/ulissesalmeida/ex_zample?branch=master)
+![CircleCI](https://img.shields.io/circleci/build/github/ulissesalmeida/ex_zample)
+![Coveralls](https://img.shields.io/coveralls/github/ulissesalmeida/ex_zample)
 
 A scalable error-friendly factories for your Elixir apps
 
