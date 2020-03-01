@@ -69,7 +69,20 @@ defmodule ExZample do
 
   def build_list(0, _factory, _attrs), do: []
 
-  def build_list(count, factory, attrs) when is_integer(count) and count > 0 do
-    Enum.map(1..count, fn _ -> build(factory, attrs) end)
-  end
+  def build_list(count, factory, attrs) when is_integer(count) and count > 0,
+    do: Enum.map(1..count, fn _ -> build(factory, attrs) end)
+
+  @doc """
+  Same as `build/2`, but returns a tuple with a pair of structs.
+
+  ## Examples
+
+      iex> ExZample.build_pair(User)
+      {%ExZample.User{}, %ExZample.User{}}
+
+      iex> ExZample.build_pair(User, age: 45)
+      {%ExZample.User{age: 45}, %ExZample.User{age: 45}}
+  """
+  @spec build_pair(factory, attrs :: Enum.t() | nil) :: {struct, struct}
+  def build_pair(factory, attrs \\ nil), do: {build(factory, attrs), build(factory, attrs)}
 end
