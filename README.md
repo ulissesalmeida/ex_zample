@@ -14,7 +14,7 @@ by adding `ex_zample` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_zample, "~> 0.1.0"}
+    {:ex_zample, "~> 0.2.0"}
   ]
 end
 ```
@@ -25,7 +25,7 @@ be found at [https://hexdocs.pm/ex_zample](https://hexdocs.pm/ex_zample).
 
 ## Quick Start
 
-You can build any struct by passing the struct module:
+You can build any struct by passing a struct module:
 
 ```elixir
 iex> ExZample.build(User)
@@ -75,18 +75,48 @@ iex> ExZample.build(UserFactory)
 %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
+## Building your factories
+
+You can use the `build/2`, `build_pair/2` and `build_list/3` to generate data
+without side-effects.
+
+```elixir
+iex> ExZample.build(UserFactory, age: 42)
+%MyApp.User{first_name: "Abili De Bob", age: 42}
+
+iex> ExZample.build_pair(UserFactory, age: 42)
+{%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+
+iex> ExZample.build_list(100, UserFactory, age: 42)
+[
+  %MyApp.User{first_name: "Abili De Bob", age: 42},
+  %MyApp.User{first_name: "Abili De Bob", age: 42},
+  # ...
+]
+```
+
+When you pass attributes, it will override the default ones defined in your
+factories.
+
+## Inspiration
+
+This library was strongly inspired by:
+
+* [ExMachina](https://github.com/thoughtbot/ex_machina)
+* [FactoryBot](https://github.com/thoughtbot/factory_bot)
+
 ## Why not other factories libraries?
 
 Right now you shouldn't change for this one. The other factories libraries has
 much more features.
 
 However, when your codebase starts to get bigger, it's nice to have a way to split up
-your factories files in multiple files. Also, it's important when the errors
+your factories files in multiple files. Also, it's important when a error happens, it
 should be explicit and easy to reason about.
 
 Most of other Elixir libraries relies on DLS with macro code, and you need to write
-macros to split up your factories files. When you get some run time error in
-your test, it's very hard to locate where is the real problem.
+macros to split up your factories files. When you get some error in
+your factory, it's very hard to locate where is the real problem.
 
 This library approach is to rely on vanilla Elixir modules and contracts based on
 Elixir behaviours. No need to use any macro. The purpose for any macro that can shows up here
@@ -96,4 +126,4 @@ will be for syntax sugar, not part of the main functionality.
 
 Probably not, you can define your own modules to return example structs and
 insert them with your repo module. However, a factory library can give you some
-convenient functions for you don't need to reinvent the wheel.  
+convenient functions for you don't need to reinvent the wheel.
