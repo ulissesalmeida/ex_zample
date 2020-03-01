@@ -86,4 +86,99 @@ defmodule ExZampleTest do
   end
 
   def access_invalid_key, do: ExZample.build(Factories.User, company: "Test company")
+
+  describe "build_list/2" do
+    import ExZample, only: [build_list: 2]
+
+    test "returns empty list when count is 0" do
+      assert [] == build_list(0, UserWithDefaults)
+    end
+
+    test "builds up to given count" do
+      default_struct = %UserWithDefaults{}
+      count = Enum.random(1..100)
+
+      list = build_list(count, UserWithDefaults)
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1 == default_struct))
+    end
+
+    test "uses struct default values" do
+      default_struct = %UserWithDefaults{}
+
+      assert [^default_struct] = build_list(1, UserWithDefaults)
+    end
+
+    test "uses the example values" do
+      default_struct = %UserWithDefaultsAndExample{}
+
+      assert [user] = build_list(1, UserWithDefaultsAndExample)
+
+      assert default_struct != user
+
+      assert user == %UserWithDefaultsAndExample{
+               first_name: "Example First Name",
+               last_name: "Example Last Name"
+             }
+    end
+
+    test "works with structless modules" do
+      assert [
+               %User{
+                 age: 21,
+                 email: "test@test.test",
+                 first_name: "First Name",
+                 id: 1,
+                 last_name: "Last Name"
+               }
+             ] = build_list(1, Factories.User)
+    end
+  end
+
+  describe "build_list/3" do
+    import ExZample, only: [build_list: 3]
+
+    test "returns empty list when count is 0" do
+      assert [] == build_list(0, UserWithDefaults, first_name: "Test")
+    end
+
+    test "builds up to given count" do
+      count = Enum.random(1..100)
+
+      list = build_list(count, UserWithDefaults, first_name: "Test")
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1.first_name == "Test"))
+    end
+
+    test "overrides given attributes on struct default values" do
+      default_struct = %UserWithDefaults{}
+
+      [%UserWithDefaults{} = user] =
+        build_list(1, UserWithDefaults, first_name: "Overrided First Name")
+
+      assert user.first_name == "Overrided First Name"
+      assert user.last_name == default_struct.last_name
+    end
+
+    test "overrides given attributes on example values" do
+      [%UserWithDefaultsAndExample{} = user] =
+        build_list(1, UserWithDefaultsAndExample, first_name: "Overrided First Name")
+
+      assert user.first_name == "Overrided First Name"
+      assert user.last_name == "Example Last Name"
+    end
+
+    test "overrides given attributes on structless modules" do
+      [%User{} = user] =
+        build_list(1, Factories.User, first_name: "Overrided First Name", age: 28)
+
+      assert user.first_name == "Overrided First Name"
+      assert user.age == 28
+
+      assert user.last_name == "Last Name"
+      assert user.email == "test@test.test"
+    end
+  end
 end
