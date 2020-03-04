@@ -6,8 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `ExZample.add_aliases/1`
+- `ExZample.add_aliases/2`
+- `ExZample.ex_zample/1`
+
 ## [0.2.0] - 2020-03-01
 
+### Added
 - `ExZample.build_list/3`
 - `ExZample.build_pair/2`
 

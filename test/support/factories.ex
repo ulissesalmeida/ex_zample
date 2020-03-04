@@ -3,6 +3,11 @@ defmodule ExZample.User do
   defstruct ~w(id first_name last_name age email)a
 end
 
+defmodule ExZample.Book do
+  @moduledoc false
+  defstruct title: "The Book's Title", code: "1321"
+end
+
 defmodule ExZample.Factories.User do
   @moduledoc false
   @behaviour ExZample

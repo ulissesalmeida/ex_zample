@@ -2,17 +2,29 @@ defmodule ExZampleTest do
   use ExUnit.Case
 
   alias ExZample.{
+    Book,
     Factories,
     User,
     UserWithDefaults,
     UserWithDefaultsAndExample
   }
 
+  require Book
   require Factories.User
+
+  setup do
+    ExZample.add_aliases(%{book: Book})
+
+    on_exit(fn ->
+      Application.put_env(:ex_zample, :global, nil)
+      Application.put_env(:ex_zample, :ex_zample, nil)
+      Application.put_env(:ex_zample, :my_app, nil)
+    end)
+  end
 
   doctest ExZample
 
-  describe "build/1" do
+  describe "build/1 when using modules" do
     import ExZample, only: [build: 1]
 
     test "uses struct default values" do
@@ -43,11 +55,60 @@ defmodule ExZampleTest do
     end
 
     test "fails with invalid module" do
-      assert_raise ArgumentError, &invalid_module/0
+      assert_raise ArgumentError, fn -> ExZample.build(__MODULE__) end
     end
   end
 
-  def invalid_module, do: ExZample.build(__MODULE__)
+  describe "build/1 when using aliases" do
+    import ExZample, only: [build: 1]
+
+    setup do
+      ExZample.add_aliases(:ex_zample, %{user: Factories.User})
+      ExZample.add_aliases(%{user: UserWithDefaults})
+
+      :ok
+    end
+
+    test "builds using the global scope when there's no scope specified" do
+      assert %UserWithDefaults{} = build(:user)
+    end
+
+    test "builds using the aliases of current scope" do
+      ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
+
+      assert %User{id: 1} = build(:user)
+    end
+
+    test "builds looking up for the current scope" do
+      ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
+
+      assert %User{id: 1} =
+               fn -> build(:user) end
+               |> Task.async()
+               |> Task.await()
+    end
+
+    # NOTE: Elixir 1.7 and 1.6 doesn't support $callers, drop their support
+    # before release 1.0.0.
+    @tag :skip
+    test "builds looking up for the caller process" do
+      pid = self()
+
+      ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
+
+      Task.Supervisor.start_child(ExZample.TestTaskSupervisor, fn ->
+        send(pid, {:user, build(:user)})
+      end)
+
+      assert_receive {:user, %User{id: 1}}
+    end
+
+    test "fails with unregistered factory" do
+      Application.put_env(:ex_zample, :global, nil)
+
+      assert_raise ArgumentError, fn -> build(:user) end
+    end
+  end
 
   describe "build/2" do
     import ExZample, only: [build: 2]
@@ -263,6 +324,26 @@ defmodule ExZampleTest do
       assert user_b.age == 28
       assert user_b.last_name == "Last Name"
       assert user_b.email == "test@test.test"
+    end
+  end
+
+  describe "add_aliases/1" do
+    import ExZample, only: [add_aliases: 1]
+
+    test "registers aliases in global namespace by default" do
+      aliases = %{user: Factories.User, default_struct: UserWithDefaults}
+
+      assert :ok = add_aliases(aliases)
+
+      assert aliases = Application.get_env(:ex_zample, :global)
+    end
+
+    test "fails to override the aliases" do
+      inital_aliases = %{user: Factories.User, default_struct: UserWithDefaults}
+      updated_aliases = %{user: UserWithDefaultsAndExample, default_struct: UserWithDefaults}
+
+      assert :ok = add_aliases(inital_aliases)
+      assert_raise ArgumentError, fn -> add_aliases(updated_aliases) end
     end
   end
 end

@@ -51,7 +51,7 @@ iex> ExZample.build(MyApp.User)
 %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
-If you don't want to mix your test data with your app code, you can define the
+If you want to separate your test data from your app code, you can define the
 factory in a different module:
 
 ```elixir
@@ -75,6 +75,73 @@ iex> ExZample.build(UserFactory)
 %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
+## Using aliases
+
+If you want to use a nickname for your factories, you can register aliases.
+For example, in your `test_helper.ex` you can call `ExZample.add_aliases/1`.
+
+```elixir
+# in your test_helper.exs
+ExZample.add_aliases(%{user: UserFactory})
+
+# in your app_test.exs
+test "activates an user" do
+  user = ExZample.build(:user)
+
+  assert :ok == MyApp.active_user(user)
+end
+```
+
+### Aliases and umbrella apps
+
+If you want to avoid the factories leaking through different apps in your
+umbrella, you can add aliases under a scope.
+
+```elixir
+# in apps/myapp_a/test/test_helper.ex
+ExZample.add_aliases(:myapp_a, %{user: UserFactory})
+```
+
+Then, you can use `ExZample.ex_zample/1` to narrow the scope of aliases
+lookups during in your tests. It fits well with ExUnit `@tags` and `setup/1`
+callbacks. For example, if you are working in a Phoenix app, you can put general
+scope enforcement in your `test/support/data_case.ex` file:
+
+```elixir
+defmodule MyApp.DataCase do
+  @moduledoc false
+
+  use ExUnit.CaseTemplate
+
+  using do
+    quote do
+      # Tells `ExZample` which scope you want to look up for your aliases
+      @moduletag ex_zample_scope: :myapp
+
+      import Ecto
+      import Ecto.Changeset
+      import Ecto.Query
+      # import ExZample (optional, import the utility functions like `build/2`)
+
+    end
+  end
+
+  # Makes `ExZample` narrow the scope of aliases based on the configured tag
+  # If you have imported the `ExZample`, you can do: `setup :ex_zample`
+  setup &ExZample.ex_zample/1
+
+  setup tags do
+    :ok = Sandbox.checkout(Repo)
+
+    unless tags[:async] do
+      Sandbox.mode(Repo, {:shared, self()})
+    end
+
+    :ok
+  end
+end
+```
+
 ## Building your factories
 
 You can use the `build/2`, `build_pair/2` and `build_list/3` to generate data
@@ -88,6 +155,20 @@ iex> ExZample.build_pair(UserFactory, age: 42)
 {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
 
 iex> ExZample.build_list(100, UserFactory, age: 42)
+[
+  %MyApp.User{first_name: "Abili De Bob", age: 42},
+  %MyApp.User{first_name: "Abili De Bob", age: 42},
+  # ...
+]
+
+# or using aliases
+iex> ExZample.build(:user, age: 42)
+%MyApp.User{first_name: "Abili De Bob", age: 42}
+
+iex> ExZample.build_pair(:user, age: 42)
+{%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+
+iex> ExZample.build_list(100, :user, age: 42)
 [
   %MyApp.User{first_name: "Abili De Bob", age: 42},
   %MyApp.User{first_name: "Abili De Bob", age: 42},
