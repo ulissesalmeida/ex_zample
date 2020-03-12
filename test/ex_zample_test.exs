@@ -63,6 +63,7 @@ defmodule ExZampleTest do
     import ExZample, only: [build: 1]
 
     setup do
+      ExZample.ex_zample(%{ex_zample_scope: nil})
       ExZample.add_aliases(:ex_zample, %{user: Factories.User})
       ExZample.add_aliases(%{user: UserWithDefaults})
 
@@ -103,10 +104,8 @@ defmodule ExZampleTest do
       assert_receive {:user, %User{id: 1}}
     end
 
-    test "fails with unregistered factory" do
-      Application.put_env(:ex_zample, :global, nil)
-
-      assert_raise ArgumentError, fn -> build(:user) end
+    test "fails with unregistered alias" do
+      assert_raise ArgumentError, fn -> build(:unregistered_alias) end
     end
   end
 
