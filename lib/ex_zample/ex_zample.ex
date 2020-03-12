@@ -3,6 +3,8 @@ defmodule ExZample do
   ExZample is a factory library based on Elixir behaviours.
   """
 
+  alias ExZample.{Sequence, SequenceSupervisor}
+
   @doc """
   Invoked every time you build your data using `ExZample` module.
 
@@ -14,11 +16,14 @@ defmodule ExZample do
   @callback example() :: struct
 
   @type factory :: module
+  @type sequence_fun :: (pos_integer -> term)
 
   @optional_callbacks example: 0
 
+  defguardp is_greater_than_0(term) when is_integer(term) and term > 0
+
   @doc """
-  Creates `aliases` for your factories to simplify the call.
+  Creates aliases for your factories to simplify the build calls.
 
   A `aliases` should be a map with atom keys and values as `factory` compatible
   modules. If you call with repeated keys this function will fail. This function
@@ -47,10 +52,11 @@ defmodule ExZample do
   """
   @spec add_aliases(atom, %{required(atom) => factory}) :: :ok
   def add_aliases(scope, aliases) when is_map(aliases) do
-    current_config = get_config(scope)
+    config = get_config(scope)
+    current_aliases = Map.get(config, :aliases, %{})
 
-    new_config =
-      Map.merge(current_config, aliases, fn factory_alias, current_factory, new_factory ->
+    updated_aliases =
+      Map.merge(current_aliases, aliases, fn factory_alias, current_factory, new_factory ->
         if current_factory == new_factory do
           current_factory
         else
@@ -63,17 +69,97 @@ defmodule ExZample do
         end
       end)
 
-    put_config(scope, new_config)
+    put_config(scope, Map.put(config, :aliases, updated_aliases))
     :ok
   end
 
-  defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}
-  defp put_config(scope, config), do: Application.put_env(:ex_zample, scope, config)
+  @doc """
+  Creates a sequence with the given `name`.
+
+  A sequence is global runtime counter that can be invoked with `sequence/1`. The
+  default counter starts from `1` and increments `1` by `1`.
+
+  ## Examples
+      iex> ExZample.create_sequence(:user_id)
+      ...> Enum.map(1..10, fn _ -> ExZample.sequence(:user_id) end)
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  """
+  @spec create_sequence(atom) :: :ok
+  def create_sequence(name), do: create_sequence(:global, name, & &1)
+
+  @doc """
+  Same as `create_sequence/1`, but you can define a different scope or a
+  sequence function.
+
+  When use with `scope` and `name` you define scoped global counter, it's
+  useful for umbrella apps for example.
+
+  When you use `name` and `sequence_fun`, the given function will receive the
+  counter and then you can transform in anything you want.
+
+  ## Examples
+      iex> ExZample.create_sequence(:my_app, :user_id)
+      ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
+      ...> ExZample.sequence(:user_id)
+      1
+
+      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
+      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
+      ["user_1", "user_2", "user_3"]
+  """
+  @spec create_sequence(scope_or_name :: atom, sequence_fun_or_name :: sequence_fun | atom) :: :ok
+  def create_sequence(scope_or_name, sequence_fun_or_name)
+
+  def create_sequence(name, sequence_fun)
+      when is_atom(name) and is_function(sequence_fun, 1),
+      do: create_sequence(:global, name, sequence_fun)
+
+  def create_sequence(scope, name)
+      when is_atom(scope) and is_atom(name),
+      do: create_sequence(scope, name, & &1)
+
+  @doc """
+  Same as `create_sequence/1`, but you can define a different scope and a
+  sequence function.
+
+  The `scope` is where where your global counter will lives, useful for umbrella
+  apps for example. The given `sequence_fun` will receive the counter and then
+  you can transform in anything you want.
+
+  ## Examples
+      iex> ExZample.create_sequence(:my_app, :user_id, &("user_" <> to_string(&1)))
+      ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
+      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
+      ["user_1", "user_2", "user_3"]
+  """
+  @spec create_sequence(atom, atom, sequence_fun) :: :ok
+  def create_sequence(scope, name, sequence_fun)
+      when is_atom(scope) and is_atom(name) and is_function(sequence_fun, 1) do
+    params = %{sequence_name: sequence_name(scope, name), sequence_fun: sequence_fun}
+
+    case DynamicSupervisor.start_child(SequenceSupervisor, {Sequence, params}) do
+      {:ok, _} ->
+        :ok
+
+      {:error, {:already_started, _}} ->
+        raise ArgumentError, """
+        The sequence #{inspect(name)} in #{inspect(scope)} scope already exists!
+        Rename the sequence or add it in a different scope.
+        """
+    end
+  catch
+    :exit, {:noproc, _} ->
+      raise ArgumentError, """
+      Looks like :ex_zample application wasn't started.
+      Make sure you have started it in your `test_helper.exs`:
+          :ok = Application.ensure_started(:ex_zample)
+      """
+  end
 
   @doc """
   Builds a struct with given `factory_or_alias` module.
 
-  If the given factory exports the `example/0` function it will use to return
+  If the given factory exports the `c:example/0` function it will use to return
   the struct and its values. Otherwise, if the module is a struct it will use
   its default values.
 
@@ -121,8 +207,9 @@ defmodule ExZample do
 
   defp try_alias(factory_alias) do
     scope = lookup_scope()
+    aliases = get_config(scope)[:aliases] || %{}
 
-    if factory = get_config(scope)[factory_alias] do
+    if factory = aliases[factory_alias] do
       inspected_argument = inspect(factory)
 
       try_factory(factory) ||
@@ -182,7 +269,7 @@ defmodule ExZample do
 
   def build_list(0, _factory, _attrs), do: []
 
-  def build_list(count, factory, attrs) when is_integer(count) and count > 0,
+  def build_list(count, factory, attrs) when is_greater_than_0(count),
     do: Enum.map(1..count, fn _ -> build(factory, attrs) end)
 
   @doc """
@@ -239,4 +326,59 @@ defmodule ExZample do
 
     :ok
   end
+
+  @doc """
+  Returns the current counter registered in the given sequence `name`.
+
+  ## Examples
+      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
+      ...> ExZample.sequence(:user_id)
+      "user_1"
+  """
+  @spec sequence(atom) :: term
+  def sequence(name) when is_atom(name) do
+    lookup_scope()
+    |> sequence_name(name)
+    |> Sequence.next()
+  catch
+    :exit, {:noproc, _} ->
+      scope = lookup_scope()
+
+      raise ArgumentError, """
+      The sequence #{inspect(name)} doesn't exist in the current #{inspect(scope)} scope.
+      Make sure your created a sequence using `ExZample.create_sequence/1`.
+      """
+  end
+
+  @doc """
+  Same as `sequence/1`, but returns a list of where the number is determined by
+  the given `count`.
+
+  ## Examples
+      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
+      ...> ExZample.sequence_list(3, :user_id)
+      ["user_1", "user_2", "user_3"]
+  """
+  @spec sequence_list(pos_integer, atom) :: [term]
+  def sequence_list(0, _name), do: []
+
+  def sequence_list(count, name) when is_greater_than_0(count),
+    do: Enum.map(1..count, fn _ -> sequence(name) end)
+
+  @doc """
+  Same as `sequence/1`, but returns a pair of sequence items.
+
+  ## Examples
+      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
+      ...> ExZample.sequence_pair(:user_id)
+      {"user_1", "user_2"}
+  """
+  @spec sequence_pair(atom) :: {term, term}
+  def sequence_pair(name), do: {sequence(name), sequence(name)}
+
+  defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}
+
+  defp put_config(scope, config), do: Application.put_env(:ex_zample, scope, config)
+
+  defp sequence_name(scope, name), do: "#{scope}.#{name}"
 end

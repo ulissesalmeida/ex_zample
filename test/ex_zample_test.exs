@@ -14,11 +14,13 @@ defmodule ExZampleTest do
 
   setup do
     ExZample.add_aliases(%{book: Book})
+    :ok = Application.ensure_started(:ex_zample)
 
     on_exit(fn ->
       Application.put_env(:ex_zample, :global, nil)
       Application.put_env(:ex_zample, :ex_zample, nil)
       Application.put_env(:ex_zample, :my_app, nil)
+      Application.stop(:ex_zample)
     end)
   end
 
@@ -343,6 +345,122 @@ defmodule ExZampleTest do
 
       assert :ok = add_aliases(inital_aliases)
       assert_raise ArgumentError, fn -> add_aliases(updated_aliases) end
+    end
+  end
+
+  describe "create_sequence/1" do
+    import ExZample, only: [create_sequence: 1]
+
+    test "registers a sequence to the global scope" do
+      assert :ok = create_sequence(:user_id)
+    end
+
+    test "fails to overried a sequence" do
+      assert :ok = create_sequence(:user_id)
+      assert_raise ArgumentError, fn -> create_sequence(:user_id) end
+    end
+  end
+
+  describe "create_sequence/2" do
+    import ExZample, only: [create_sequence: 2]
+
+    test "registers a sequence with given function to the global scope" do
+      assert :ok = create_sequence(:user_id, fn i -> "user_#{i}" end)
+    end
+
+    test "fails to overried a sequence" do
+      assert :ok = create_sequence(:user_id, fn i -> "user_#{i}" end)
+      assert_raise ArgumentError, fn -> create_sequence(:user_id, fn i -> "abilide_#{i}" end) end
+    end
+  end
+
+  describe "create_sequence/3" do
+    import ExZample, only: [create_sequence: 3]
+
+    test "registers a sequence to given scope" do
+      assert :ok = create_sequence(:global, :user_id, fn i -> "user_#{i}" end)
+      assert :ok = create_sequence(:ex_zample, :user_id, fn i -> "user_#{i}" end)
+    end
+
+    test "fails to overried a sequenc in given scopee" do
+      assert :ok = create_sequence(:ex_zample, :user_id, fn i -> "user_#{i}" end)
+
+      assert_raise ArgumentError, fn ->
+        create_sequence(:ex_zample, :user_id, fn i -> "user_#{i}" end)
+      end
+    end
+  end
+
+  describe "sequence/1" do
+    import ExZample, only: [sequence: 1]
+
+    test "runs the sequence in atomic way" do
+      ExZample.create_sequence(:user_id)
+
+      tasks = for _i <- 1..10, do: Task.async(fn -> sequence(:user_id) end)
+
+      assert tasks |> Enum.map(&Task.await/1) |> Enum.sort() == Enum.to_list(1..10)
+    end
+
+    test "runs the sequence in the global scope when there's no scope defined" do
+      ExZample.create_sequence(:user_id, &(&1 * 2))
+      ExZample.create_sequence(:ex_zample, :user_id)
+
+      assert sequence(:user_id) == 2
+    end
+
+    test "runs the sequence in current scope" do
+      ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
+
+      ExZample.create_sequence(:user_id, &(&1 * 2))
+      ExZample.create_sequence(:ex_zample, :user_id)
+
+      assert sequence(:user_id) == 1
+    end
+
+    test "fails if sequence doesn't exist" do
+      assert_raise ArgumentError, fn -> sequence(:user_id) end
+    end
+  end
+
+  describe "sequence_list/2" do
+    import ExZample, only: [sequence_list: 2]
+
+    test "runs the sequence in atomic way" do
+      ExZample.create_sequence(:user_id)
+
+      tasks = for _i <- 1..5, do: Task.async(fn -> sequence_list(3, :user_id) end)
+      generated_items = tasks |> Enum.flat_map(&Task.await/1) |> Enum.sort()
+
+      assert generated_items == Enum.to_list(1..15)
+    end
+
+    test "fails if sequence doesn't exist" do
+      assert_raise ArgumentError, fn -> sequence_list(3, :user_id) end
+    end
+  end
+
+  describe "sequence_pair/1" do
+    import ExZample, only: [sequence_pair: 1]
+
+    test "runs the sequence in atomic way" do
+      ExZample.create_sequence(:user_id)
+
+      tasks =
+        for _i <- 1..5,
+            do:
+              Task.async(fn ->
+                {a, b} = sequence_pair(:user_id)
+                [a, b]
+              end)
+
+      generated_items = tasks |> Enum.flat_map(&Task.await/1) |> Enum.sort()
+
+      assert generated_items == Enum.to_list(1..10)
+    end
+
+    test "fails if sequence doesn't exist" do
+      assert_raise ArgumentError, fn -> sequence_pair(:user_id) end
     end
   end
 end
