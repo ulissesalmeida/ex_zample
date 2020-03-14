@@ -5,6 +5,8 @@ defmodule ExZample do
 
   alias ExZample.{Sequence, SequenceSupervisor}
 
+  import ExZample.Since
+
   @doc """
   Invoked every time you build your data using `ExZample` module.
 
@@ -23,10 +25,12 @@ defmodule ExZample do
   defguardp is_greater_than_0(term) when is_integer(term) and term > 0
 
   @doc false
+  since("0.3.0")
   @deprecated "Use config_aliases/1 instead"
   def add_aliases(aliases), do: config_aliases(aliases)
 
   @doc false
+  since("0.3.0")
   @deprecated "Use config_aliases/2 instead"
   def add_aliases(scope, aliases), do: config_aliases(scope, aliases)
 
@@ -42,6 +46,7 @@ defmodule ExZample do
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
   """
+  since("0.4.0")
   @spec config_aliases(%{required(atom) => factory}) :: :ok
   def config_aliases(aliases) when is_map(aliases), do: config_aliases(:global, aliases)
 
@@ -58,6 +63,7 @@ defmodule ExZample do
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
   """
+  since("0.4.0")
   @spec config_aliases(atom, %{required(atom) => factory}) :: :ok
   def config_aliases(scope, aliases) when is_map(aliases) do
     config = get_config(scope)
@@ -92,6 +98,7 @@ defmodule ExZample do
       ...> Enum.map(1..10, fn _ -> ExZample.sequence(:user_id) end)
       [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   """
+  since("0.4.0")
   @spec create_sequence(atom) :: :ok
   def create_sequence(name), do: create_sequence(:global, name, & &1)
 
@@ -115,6 +122,7 @@ defmodule ExZample do
       ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
       ["user_1", "user_2", "user_3"]
   """
+  since("0.4.0")
   @spec create_sequence(scope_or_name :: atom, sequence_fun_or_name :: sequence_fun | atom) :: :ok
   def create_sequence(scope_or_name, sequence_fun_or_name)
 
@@ -140,6 +148,7 @@ defmodule ExZample do
       ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
       ["user_1", "user_2", "user_3"]
   """
+  since("0.4.0")
   @spec create_sequence(atom, atom, sequence_fun) :: :ok
   def create_sequence(scope, name, sequence_fun)
       when is_atom(scope) and is_atom(name) and is_function(sequence_fun, 1) do
@@ -193,6 +202,7 @@ defmodule ExZample do
       iex> ExZample.build(:book, code: "007")
       %ExZample.Book{code: "007", title: "The Book's Title"}
   """
+  since("0.1.0")
   @spec build(factory, Enum.t() | nil) :: struct
   def build(factory_or_alias, attrs \\ nil) when is_atom(factory_or_alias) do
     data = try_factory(factory_or_alias) || try_alias(factory_or_alias)
@@ -272,6 +282,7 @@ defmodule ExZample do
       iex> ExZample.build_list(3, :book, code: "007")
       [%ExZample.Book{code: "007"},%ExZample.Book{code: "007"}, %ExZample.Book{code: "007"}]
   """
+  since("0.2.0")
   @spec build_list(count :: pos_integer, factory, attrs :: Enum.t() | nil) :: [struct]
   def build_list(count, factory, attrs \\ nil)
 
@@ -297,6 +308,7 @@ defmodule ExZample do
       iex> ExZample.build_pair(:book, code: "007")
       {%ExZample.Book{code: "007"},%ExZample.Book{code: "007"}}
   """
+  since("0.2.0")
   @spec build_pair(factory, attrs :: Enum.t() | nil) :: {struct, struct}
   def build_pair(factory, attrs \\ nil), do: {build(factory, attrs), build(factory, attrs)}
 
@@ -324,6 +336,7 @@ defmodule ExZample do
   In the example above, `ExZample` will look for a factory registered in alias
   `:user` in the `:my_app` scope.
   """
+  since("0.3.0")
   @spec ex_zample(map) :: :ok
   def ex_zample(scope) when is_map(scope) do
     if ex_zample_scope = scope[:ex_zample_scope] do
@@ -343,6 +356,7 @@ defmodule ExZample do
       ...> ExZample.sequence(:user_id)
       "user_1"
   """
+  since("0.4.0")
   @spec sequence(atom) :: term
   def sequence(name) when is_atom(name) do
     lookup_scope()
@@ -367,6 +381,7 @@ defmodule ExZample do
       ...> ExZample.sequence_list(3, :user_id)
       ["user_1", "user_2", "user_3"]
   """
+  since("0.4.0")
   @spec sequence_list(pos_integer, atom) :: [term]
   def sequence_list(0, _name), do: []
 
@@ -381,6 +396,7 @@ defmodule ExZample do
       ...> ExZample.sequence_pair(:user_id)
       {"user_1", "user_2"}
   """
+  since("0.4.0")
   @spec sequence_pair(atom) :: {term, term}
   def sequence_pair(name), do: {sequence(name), sequence(name)}
 

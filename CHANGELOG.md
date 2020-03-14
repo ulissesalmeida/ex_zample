@@ -6,6 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2020-03-14
+
+### Added
+- `ExZample.config_aliases/1`
+- `ExZample.config_aliases/2`
+- `ExZample.create_sequence/1`
+- `ExZample.create_sequence/2`
+- `ExZample.create_sequence/3`
+- `ExZample.sequence/1`
+- `ExZample.sequence_list/2`
+- `ExZample.sequence_pair/1`
+
+### Deprecated
+- `ExZample.add_aliases/1`
+- `ExZample.add_aliases/2`
+
 ## [0.3.0] - 2020-03-05
 
 ### Added
