@@ -22,6 +22,14 @@ defmodule ExZample do
 
   defguardp is_greater_than_0(term) when is_integer(term) and term > 0
 
+  @doc false
+  @deprecated "Use config_aliases/1 instead"
+  def add_aliases(aliases), do: config_aliases(aliases)
+
+  @doc false
+  @deprecated "Use config_aliases/2 instead"
+  def add_aliases(scope, aliases), do: config_aliases(scope, aliases)
+
   @doc """
   Creates aliases for your factories to simplify the build calls.
 
@@ -30,28 +38,28 @@ defmodule ExZample do
   is ideal to be called once, for example in your `test_helper.ex` file.
 
   ## Examples
-      iex> ExZample.add_aliases(%{user: Factories.User})
+      iex> ExZample.config_aliases(%{user: Factories.User})
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
   """
-  @spec add_aliases(%{required(atom) => factory}) :: :ok
-  def add_aliases(aliases) when is_map(aliases), do: add_aliases(:global, aliases)
+  @spec config_aliases(%{required(atom) => factory}) :: :ok
+  def config_aliases(aliases) when is_map(aliases), do: config_aliases(:global, aliases)
 
   @doc """
-  Same as `add_aliases/1`, but you can define a different scope.
+  Same as `config_aliases/1`, but you can define a different scope.
 
   This function is specially useful for umbrella apps where each app can define
   their factories without leaking any aliases to other apps. You can enforce the
   current scope with `ex_zample/1`.
 
   ## Examples
-      iex> ExZample.add_aliases(:my_app, %{user: Factories.User})
+      iex> ExZample.config_aliases(:my_app, %{user: Factories.User})
       ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
   """
-  @spec add_aliases(atom, %{required(atom) => factory}) :: :ok
-  def add_aliases(scope, aliases) when is_map(aliases) do
+  @spec config_aliases(atom, %{required(atom) => factory}) :: :ok
+  def config_aliases(scope, aliases) when is_map(aliases) do
     config = get_config(scope)
     current_aliases = Map.get(config, :aliases, %{})
 
@@ -217,7 +225,7 @@ defmodule ExZample do
           message: """
           #{inspected_argument} is not a factory
           If #{inspected_argument} is a module, you need to create a `example/0` function
-          If #{inspected_argument} is a alias, you need to register it with `ExZample.add_aliases/1`
+          If #{inspected_argument} is a alias, you need to register it with `ExZample.config_aliases/1`
           """
     else
       raise ArgumentError,

@@ -13,7 +13,7 @@ defmodule ExZampleTest do
   require Factories.User
 
   setup do
-    ExZample.add_aliases(%{book: Book})
+    ExZample.config_aliases(%{book: Book})
     :ok = Application.ensure_started(:ex_zample)
 
     on_exit(fn ->
@@ -66,8 +66,8 @@ defmodule ExZampleTest do
 
     setup do
       ExZample.ex_zample(%{ex_zample_scope: nil})
-      ExZample.add_aliases(:ex_zample, %{user: Factories.User})
-      ExZample.add_aliases(%{user: UserWithDefaults})
+      ExZample.config_aliases(:ex_zample, %{user: Factories.User})
+      ExZample.config_aliases(%{user: UserWithDefaults})
 
       :ok
     end
@@ -328,13 +328,13 @@ defmodule ExZampleTest do
     end
   end
 
-  describe "add_aliases/1" do
-    import ExZample, only: [add_aliases: 1]
+  describe "config_aliases/1" do
+    import ExZample, only: [config_aliases: 1]
 
     test "registers aliases in global namespace by default" do
       aliases = %{user: Factories.User, default_struct: UserWithDefaults}
 
-      assert :ok = add_aliases(aliases)
+      assert :ok = config_aliases(aliases)
 
       assert aliases = Application.get_env(:ex_zample, :global)
     end
@@ -343,8 +343,8 @@ defmodule ExZampleTest do
       inital_aliases = %{user: Factories.User, default_struct: UserWithDefaults}
       updated_aliases = %{user: UserWithDefaultsAndExample, default_struct: UserWithDefaults}
 
-      assert :ok = add_aliases(inital_aliases)
-      assert_raise ArgumentError, fn -> add_aliases(updated_aliases) end
+      assert :ok = config_aliases(inital_aliases)
+      assert_raise ArgumentError, fn -> config_aliases(updated_aliases) end
     end
   end
 
