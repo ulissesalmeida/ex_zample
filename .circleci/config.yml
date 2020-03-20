@@ -70,17 +70,20 @@ commands:
       - save_cache:
           key: v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
           paths:
-            - _build
+            - priv/plts/dialyzer.plt
+            - priv/plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
           key: v1-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
-            - _build
+            - priv/plts/dialyzer.plt
+            - priv/plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
           key: v1-plt-<< parameters.elixir_version >>
           paths:
-            - _build
+            - priv/plts/dialyzer.plt
+            - priv/plts/dialyzer.plt.hash
             - ~/.mix
 
   restore_plt:

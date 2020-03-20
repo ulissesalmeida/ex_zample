@@ -21,3 +21,7 @@ erl_crash.dump
 
 # Ignore package tarball (built via "mix hex.build").
 exzample-*.tar
+
+# Ignore Dialyzers PLTs
+/priv/plts/dialyzer.plt
+/priv/plts/dialyzer.plt.hash
