@@ -46,6 +46,26 @@ defmodule ExZampleTest do
              }
     end
 
+    test "uses the example/1, a.k.a full control, callback" do
+      assert build(Factories.UserOnlyFullControl) == %User{
+               id: 2,
+               first_name: "full-control:first_name",
+               last_name: "full-control:last_name",
+               age: 3,
+               email: "full-control:email"
+             }
+    end
+
+    test "uses the example/0 callback when both are defined" do
+      assert build(Factories.UserFullControlAndExample) == %User{
+               id: 777,
+               first_name: "Example Full: First Name",
+               last_name: "Example Full: Last Name",
+               age: 25,
+               email: "Example Full: test@test.test"
+             }
+    end
+
     test "works with structless modules" do
       assert build(Factories.User) == %User{
                age: 21,
@@ -140,6 +160,26 @@ defmodule ExZampleTest do
 
       assert user.last_name == "Last Name"
       assert user.email == "test@test.test"
+    end
+
+    test "uses the example/1, a.k.a full control, callback" do
+      assert build(Factories.UserOnlyFullControl, first_name: "overridden", id: 3) == %User{
+               id: 6,
+               first_name: "full-control:overridden",
+               last_name: "full-control:last_name",
+               age: 3,
+               email: "full-control:email"
+             }
+    end
+
+    test "uses the example/1 callback when both are defined" do
+      assert build(Factories.UserFullControlAndExample, last_name: "overridden", age: 3) == %User{
+               id: 2,
+               first_name: "full-control:first_name",
+               last_name: "full-control:overridden",
+               age: 9,
+               email: "full-control:email"
+             }
     end
 
     test "fails with invalid keys" do
@@ -355,7 +395,7 @@ defmodule ExZampleTest do
       assert :ok = create_sequence(:user_id)
     end
 
-    test "fails to overried a sequence" do
+    test "fails to overridden a sequence" do
       assert :ok = create_sequence(:user_id)
       assert_raise ArgumentError, fn -> create_sequence(:user_id) end
     end
@@ -368,7 +408,7 @@ defmodule ExZampleTest do
       assert :ok = create_sequence(:user_id, fn i -> "user_#{i}" end)
     end
 
-    test "fails to overried a sequence" do
+    test "fails to overridden a sequence" do
       assert :ok = create_sequence(:user_id, fn i -> "user_#{i}" end)
       assert_raise ArgumentError, fn -> create_sequence(:user_id, fn i -> "abilide_#{i}" end) end
     end
@@ -382,7 +422,7 @@ defmodule ExZampleTest do
       assert :ok = create_sequence(:ex_zample, :user_id, fn i -> "user_#{i}" end)
     end
 
-    test "fails to overried a sequenc in given scopee" do
+    test "fails to overridden a sequenc in given scopee" do
       assert :ok = create_sequence(:ex_zample, :user_id, fn i -> "user_#{i}" end)
 
       assert_raise ArgumentError, fn ->

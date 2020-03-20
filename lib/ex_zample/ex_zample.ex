@@ -15,12 +15,34 @@ defmodule ExZample do
   This callback is optional when the module given is a struct. It will use
   the struct default values if no callback is given.
   """
+  since("0.1.0")
   @callback example() :: struct
+
+  @doc """
+  Same as `c:example/0`, but here you have the full control in how will build
+  your struct given the attributes.
+
+  The keyword list given in functions like `build/2` are transformed in map
+  for your convenience and you need to return a struct.
+
+  You can have two scenarios when using this callback:
+
+  1. If you define `example/0` and `example/1` in same factory, `example/0` will
+     be prefered when you use `build/1`. The `example/1` will preferend if you
+     use with `build/2`.
+
+  2. If you only implement `example/1` and use `build/1`, your callback will
+     invoked with an empty map.
+
+  This callback is optional.
+  """
+  since("0.5.0")
+  @callback example(attrs :: map) :: struct
 
   @type factory :: module
   @type sequence_fun :: (pos_integer -> term)
 
-  @optional_callbacks example: 0
+  @optional_callbacks example: 0, example: 1
 
   defguardp is_greater_than_0(term) when is_integer(term) and term > 0
 
@@ -204,16 +226,16 @@ defmodule ExZample do
   """
   since("0.1.0")
   @spec build(factory, Enum.t() | nil) :: struct
-  def build(factory_or_alias, attrs \\ nil) when is_atom(factory_or_alias) do
-    data = try_factory(factory_or_alias) || try_alias(factory_or_alias)
+  def build(factory_or_alias, attrs \\ nil) when is_atom(factory_or_alias),
+    do: try_factory(factory_or_alias, attrs) || try_alias(factory_or_alias, attrs)
 
-    if attrs, do: struct!(data, attrs), else: data
-  end
-
-  defp try_factory(factory) do
+  defp try_factory(factory, nil) do
     cond do
       function_exported?(factory, :example, 0) ->
         factory.example()
+
+      function_exported?(factory, :example, 1) ->
+        factory.example(%{})
 
       function_exported?(factory, :__struct__, 1) ->
         struct!(factory)
@@ -223,24 +245,46 @@ defmodule ExZample do
     end
   end
 
-  defp try_alias(factory_alias) do
+  defp try_factory(factory, enum) do
+    cond do
+      function_exported?(factory, :example, 1) ->
+        enum
+        |> Map.new()
+        |> factory.example()
+
+      function_exported?(factory, :example, 0) ->
+        struct!(factory.example(), enum)
+
+      function_exported?(factory, :__struct__, 1) ->
+        struct!(factory, enum)
+
+      true ->
+        nil
+    end
+  end
+
+  defp try_alias(factory_alias, attrs) do
     scope = lookup_scope()
     aliases = get_config(scope)[:aliases] || %{}
 
     if factory = aliases[factory_alias] do
       inspected_argument = inspect(factory)
 
-      try_factory(factory) ||
+      try_factory(factory, attrs) ||
         raise ArgumentError,
           message: """
           #{inspected_argument} is not a factory
-          If #{inspected_argument} is a module, you need to create a `example/0` function
-          If #{inspected_argument} is a alias, you need to register it with `ExZample.config_aliases/1`
+          You need to create a `example/0` function
           """
     else
+      inspected_argument = inspect(factory_alias)
+
       raise ArgumentError,
-        message:
-          "There's no alias registered for #{inspect(factory_alias)} in #{inspect(scope)} scope"
+        message: """
+        #{inspected_argument} is not a factory in #{inspect(scope)} scope
+        If #{inspected_argument} you need to create a `example/0` function
+        If #{inspected_argument} is a alias, you need to register it with `ExZample.config_aliases/1`
+        """
     end
   end
 

@@ -28,8 +28,8 @@ be found at [https://hexdocs.pm/ex_zample](https://hexdocs.pm/ex_zample).
 You can build any struct by passing a struct module:
 
 ```elixir
-iex> ExZample.build(User)
-%MyApp.User{first_name: nil, age: 21}
+ExZample.build(User)
+# => %MyApp.User{first_name: nil, age: 21}
 ```
 
 `ExZample` will automatically use the default values inside of that struct. If
@@ -47,8 +47,9 @@ defmodule MyApp.User do
   end
 end
 
-iex> ExZample.build(MyApp.User)
-%MyApp.User{first_name: "Abili De Bob", age: 12}
+# later
+ExZample.build(MyApp.User)
+# => %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
 If you want to separate your test data from your app code, you can define the
@@ -70,9 +71,27 @@ defmodule MyApp.Factories.UserFactory do
   end
 end
 
-iex> alias MyApp.Factories.UserFactory
-iex> ExZample.build(UserFactory)
-%MyApp.User{first_name: "Abili De Bob", age: 12}
+# later
+alias MyApp.Factories.UserFactory
+ExZample.build(UserFactory)
+# => %MyApp.User{first_name: "Abili De Bob", age: 12}
+```
+
+You can implement the `example/1` callback when you want to have full control
+in how your factories are built:
+
+```elixir
+@impl true
+def example(attrs) do
+  age = Map.get(attrs, :age, 12) * 2
+  first_name = Map.get(attrs, :first_name, "Abilid") <> " De Bob"
+
+  %User{first_name: first_name, age: age}
+end
+
+# later
+build(:user, first_name: "Alice")
+# => %User{first_name: "Alice De Bob", age: 24}
 ```
 
 ## Using aliases
@@ -98,32 +117,32 @@ You can use the `build/2`, `build_pair/2` and `build_list/3` to generate data
 without side-effects.
 
 ```elixir
-iex> ExZample.build(UserFactory, age: 42)
-%MyApp.User{first_name: "Abili De Bob", age: 42}
+ExZample.build(UserFactory, age: 42)
+# => %MyApp.User{first_name: "Abili De Bob", age: 42}
 
-iex> ExZample.build_pair(UserFactory, age: 42)
-{%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+ExZample.build_pair(UserFactory, age: 42)
+# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
 
-iex> ExZample.build_list(100, UserFactory, age: 42)
-[
-  %MyApp.User{first_name: "Abili De Bob", age: 42},
-  %MyApp.User{first_name: "Abili De Bob", age: 42},
-  # ...
-]
+ExZample.build_list(100, UserFactory, age: 42)
+# => [
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      ...
+#   ]
 
 # or using aliases
-iex> ExZample.build(:user, age: 42)
-%MyApp.User{first_name: "Abili De Bob", age: 42}
+ExZample.build(:user, age: 42)
+# => %MyApp.User{first_name: "Abili De Bob", age: 42}
 
-iex> ExZample.build_pair(:user, age: 42)
-{%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+ExZample.build_pair(:user, age: 42)
+# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
 
-iex> ExZample.build_list(100, :user, age: 42)
-[
-  %MyApp.User{first_name: "Abili De Bob", age: 42},
-  %MyApp.User{first_name: "Abili De Bob", age: 42},
-  # ...
-]
+ExZample.build_list(100, :user, age: 42)
+# => [
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      ...
+#   ]
 ```
 
 When you pass attributes, it will override the default ones defined in your
