@@ -23,5 +23,5 @@ erl_crash.dump
 exzample-*.tar
 
 # Ignore Dialyzers PLTs
-/priv/plts/dialyzer.plt
-/priv/plts/dialyzer.plt.hash
+/plts/dialyzer.plt
+/plts/dialyzer.plt.hash

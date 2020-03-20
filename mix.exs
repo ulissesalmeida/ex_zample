@@ -21,7 +21,7 @@ defmodule ExZample.MixProject do
       ],
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: [
-        plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
+        plt_file: {:no_warn, "plts/dialyzer.plt"}
       ]
     ]
   end

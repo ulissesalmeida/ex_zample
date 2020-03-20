@@ -13,12 +13,12 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v2-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v3-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
             - deps
             - _build
       - save_cache:
-          key: v2-deps-<< parameters.elixir_version >>
+          key: v3-deps-<< parameters.elixir_version >>
           paths:
             - deps
             - _build
@@ -30,8 +30,8 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v2-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v2-deps-<< parameters.elixir_version >>
+            - v3-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v3-deps-<< parameters.elixir_version >>
 
   save_app:
     description: "Cache compiled build"
@@ -39,15 +39,15 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v2-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          key: v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
           paths:
             - _build/test/lib/ex_zample
       - save_cache:
-          key: v2-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
             - _build/test/lib/ex_zample
       - save_cache:
-          key: v2-app-<< parameters.elixir_version >>
+          key: v3-app-<< parameters.elixir_version >>
           paths:
             - _build/test/lib/ex_zample
 
@@ -58,9 +58,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v2-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
-            - v2-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v2-app-<< parameters.elixir_version >>
+            - v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v3-app-<< parameters.elixir_version >>
 
   save_plt:
     description: "Cache dialyzer plt"
@@ -68,22 +68,22 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v2-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          key: v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
           paths:
-            - priv/plts/dialyzer.plt
-            - priv/plts/dialyzer.plt.hash
+            - plts/dialyzer.plt
+            - plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
-          key: v2-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
-            - priv/plts/dialyzer.plt
-            - priv/plts/dialyzer.plt.hash
+            - plts/dialyzer.plt
+            - plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
-          key: v2-plt-<< parameters.elixir_version >>
+          key: v3-plt-<< parameters.elixir_version >>
           paths:
-            - priv/plts/dialyzer.plt
-            - priv/plts/dialyzer.plt.hash
+            - plts/dialyzer.plt
+            - plts/dialyzer.plt.hash
             - ~/.mix
 
   restore_plt:
@@ -93,9 +93,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v2-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
-            - v2-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v2-plt-<< parameters.elixir_version >>
+            - v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v3-plt-<< parameters.elixir_version >>
   test:
     parameters:
       <<: *elixir_parameter
