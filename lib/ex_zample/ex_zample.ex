@@ -64,7 +64,7 @@ defmodule ExZample do
   is ideal to be called once, for example in your `test_helper.ex` file.
 
   ## Examples
-      iex> ExZample.config_aliases(%{user: Factories.User})
+      iex> ExZample.config_aliases(%{user: UserFactory})
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
   """
@@ -80,7 +80,7 @@ defmodule ExZample do
   current scope with `ex_zample/1`.
 
   ## Examples
-      iex> ExZample.config_aliases(:my_app, %{user: Factories.User})
+      iex> ExZample.config_aliases(:my_app, %{user: UserFactory})
       ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
       ...> ExZample.build(:user)
       %User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
@@ -209,7 +209,7 @@ defmodule ExZample do
       iex> ExZample.build(User)
       %ExZample.User{}
 
-      iex> ExZample.build(Factories.User)
+      iex> ExZample.build(UserFactory)
       %ExZample.User{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
 
       iex> ExZample.build(:book)
@@ -218,7 +218,7 @@ defmodule ExZample do
       iex> ExZample.build(User, age: 45)
       %ExZample.User{age: 45}
 
-      iex> ExZample.build(Factories.User, age: 45)
+      iex> ExZample.build(UserFactory, age: 45)
       %ExZample.User{age: 45, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
 
       iex> ExZample.build(:book, code: "007")
@@ -282,7 +282,7 @@ defmodule ExZample do
       raise ArgumentError,
         message: """
         #{inspected_argument} is not a factory in #{inspect(scope)} scope
-        If #{inspected_argument} you need to create a `example/0` function
+        If #{inspected_argument} is a module, you need to create a `example/0` function
         If #{inspected_argument} is a alias, you need to register it with `ExZample.config_aliases/1`
         """
     end
@@ -446,7 +446,8 @@ defmodule ExZample do
 
   defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}
 
-  defp put_config(scope, config), do: Application.put_env(:ex_zample, scope, config)
+  defp put_config(scope, config),
+    do: Application.put_env(:ex_zample, scope, config)
 
   defp sequence_name(scope, name), do: "#{scope}.#{name}"
 end

@@ -1,25 +1,36 @@
-defmodule ExZampleTest do
-  use ExUnit.Case
+defmodule ExZample.Test do
+  use ExUnit.Case, async: false
 
   alias ExZample.{
     Book,
-    Factories,
     User,
     UserWithDefaults,
     UserWithDefaultsAndExample
   }
 
+  alias ExZample.Factories.{
+    UserFactory,
+    UserWithFullControlAndExampleFactory,
+    UserWithFullControlFactory
+  }
+
   require Book
-  require Factories.User
+
+  require UserFactory
+  require UserWithFullControlFactory
+  require UserWithFullControlAndExampleFactory
 
   setup do
-    ExZample.config_aliases(%{book: Book})
     :ok = Application.ensure_started(:ex_zample)
+    default_env = Application.get_all_env(:ex_zample)
+
+    ExZample.config_aliases(%{book: Book})
 
     on_exit(fn ->
-      Application.put_env(:ex_zample, :global, nil)
-      Application.put_env(:ex_zample, :ex_zample, nil)
-      Application.put_env(:ex_zample, :my_app, nil)
+      Enum.each(default_env, fn {key, value} ->
+        Application.put_env(:ex_zample, key, value)
+      end)
+
       Application.stop(:ex_zample)
     end)
   end
@@ -47,7 +58,7 @@ defmodule ExZampleTest do
     end
 
     test "uses the example/1, a.k.a full control, callback" do
-      assert build(Factories.UserOnlyFullControl) == %User{
+      assert build(UserWithFullControlFactory) == %User{
                id: 2,
                first_name: "full-control:first_name",
                last_name: "full-control:last_name",
@@ -57,7 +68,7 @@ defmodule ExZampleTest do
     end
 
     test "uses the example/0 callback when both are defined" do
-      assert build(Factories.UserFullControlAndExample) == %User{
+      assert build(UserWithFullControlAndExampleFactory) == %User{
                id: 777,
                first_name: "Example Full: First Name",
                last_name: "Example Full: Last Name",
@@ -67,7 +78,7 @@ defmodule ExZampleTest do
     end
 
     test "works with structless modules" do
-      assert build(Factories.User) == %User{
+      assert build(UserFactory) == %User{
                age: 21,
                email: "test@test.test",
                first_name: "First Name",
@@ -86,7 +97,11 @@ defmodule ExZampleTest do
 
     setup do
       ExZample.ex_zample(%{ex_zample_scope: nil})
-      ExZample.config_aliases(:ex_zample, %{user: Factories.User})
+
+      Application.put_env(:ex_zample, :global, nil)
+      Application.put_env(:ex_zample, :ex_zample, nil)
+
+      ExZample.config_aliases(:ex_zample, %{user: UserFactory})
       ExZample.config_aliases(%{user: UserWithDefaults})
 
       :ok
@@ -153,7 +168,7 @@ defmodule ExZampleTest do
     end
 
     test "overrides given attributes on structless modules" do
-      user = %User{} = build(Factories.User, first_name: "Overrided First Name", age: 28)
+      user = %User{} = build(UserFactory, first_name: "Overrided First Name", age: 28)
 
       assert user.first_name == "Overrided First Name"
       assert user.age == 28
@@ -163,23 +178,25 @@ defmodule ExZampleTest do
     end
 
     test "uses the example/1, a.k.a full control, callback" do
-      assert build(Factories.UserOnlyFullControl, first_name: "overridden", id: 3) == %User{
-               id: 6,
-               first_name: "full-control:overridden",
-               last_name: "full-control:last_name",
-               age: 3,
-               email: "full-control:email"
-             }
+      assert build(UserWithFullControlFactory, first_name: "overridden", id: 3) ==
+               %User{
+                 id: 6,
+                 first_name: "full-control:overridden",
+                 last_name: "full-control:last_name",
+                 age: 3,
+                 email: "full-control:email"
+               }
     end
 
     test "uses the example/1 callback when both are defined" do
-      assert build(Factories.UserFullControlAndExample, last_name: "overridden", age: 3) == %User{
-               id: 2,
-               first_name: "full-control:first_name",
-               last_name: "full-control:overridden",
-               age: 9,
-               email: "full-control:email"
-             }
+      assert build(UserWithFullControlAndExampleFactory, last_name: "overridden", age: 3) ==
+               %User{
+                 id: 2,
+                 first_name: "full-control:first_name",
+                 last_name: "full-control:overridden",
+                 age: 9,
+                 email: "full-control:email"
+               }
     end
 
     test "fails with invalid keys" do
@@ -187,7 +204,7 @@ defmodule ExZampleTest do
     end
   end
 
-  def access_invalid_key, do: ExZample.build(Factories.User, company: "Test company")
+  def access_invalid_key, do: ExZample.build(UserFactory, company: "Test company")
 
   describe "build_list/2" do
     import ExZample, only: [build_list: 2]
@@ -234,7 +251,7 @@ defmodule ExZampleTest do
                  id: 1,
                  last_name: "Last Name"
                }
-             ] = build_list(1, Factories.User)
+             ] = build_list(1, UserFactory)
     end
   end
 
@@ -273,8 +290,7 @@ defmodule ExZampleTest do
     end
 
     test "overrides given attributes on structless modules" do
-      [%User{} = user] =
-        build_list(1, Factories.User, first_name: "Overrided First Name", age: 28)
+      [%User{} = user] = build_list(1, UserFactory, first_name: "Overrided First Name", age: 28)
 
       assert user.first_name == "Overrided First Name"
       assert user.age == 28
@@ -321,7 +337,7 @@ defmodule ExZampleTest do
         last_name: "Last Name"
       }
 
-      assert {^expected_example, ^expected_example} = build_pair(Factories.User)
+      assert {^expected_example, ^expected_example} = build_pair(UserFactory)
     end
   end
 
@@ -354,7 +370,7 @@ defmodule ExZampleTest do
 
     test "overrides given attributes on structless modules" do
       {%User{} = user_a, %User{} = user_b} =
-        build_pair(Factories.User, first_name: "Overrided First Name", age: 28)
+        build_pair(UserFactory, first_name: "Overrided First Name", age: 28)
 
       assert user_a.first_name == "Overrided First Name"
       assert user_a.age == 28
@@ -372,7 +388,7 @@ defmodule ExZampleTest do
     import ExZample, only: [config_aliases: 1]
 
     test "registers aliases in global namespace by default" do
-      aliases = %{user: Factories.User, default_struct: UserWithDefaults}
+      aliases = %{user: UserFactory, default_struct: UserWithDefaults}
 
       assert :ok = config_aliases(aliases)
 
@@ -380,7 +396,7 @@ defmodule ExZampleTest do
     end
 
     test "fails to override the aliases" do
-      inital_aliases = %{user: Factories.User, default_struct: UserWithDefaults}
+      inital_aliases = %{user: UserFactory, default_struct: UserWithDefaults}
       updated_aliases = %{user: UserWithDefaultsAndExample, default_struct: UserWithDefaults}
 
       assert :ok = config_aliases(inital_aliases)

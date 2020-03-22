@@ -33,83 +33,39 @@ ExZample.build(User)
 ```
 
 `ExZample` will automatically use the default values inside of that struct. If
-you want to define different values, you need to implement the `example/0`
-callback.
+you want to define different values, you can create factories using
+`ExZample.DSL`. For example:
 
 ```elixir
-defmodule MyApp.User do
-  @behaviour ExZample
-  defstruct first_name: nil, age: 21
+defmodule MyApp.Factories do
+  use ExZample.DSL
 
-  @impl true
-  def example do
-    %__MODULE__{first_name: "Abili De Bob", age: 12}
+  alias ExZample.User
+
+  factory :user do
+    example do
+      %User{
+        first_name: "Abili De Bob",
+        age: 12,
+      }
+    end
   end
 end
 
-# later
-ExZample.build(MyApp.User)
+# Don't forget to start :ex_zample app!
+# for example, in your: test_helper.exs
+:ok = Application.ensure_started(:ex_zample)
+```
+
+Now you can invoke them like this:
+
+```elixir
+ExZample.build(:user)
 # => %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
-If you want to separate your test data from your app code, you can define the
-factory in a different module:
-
-```elixir
-defmodule MyApp.User do
-  defstruct first_name: nil, age: 21
-end
-
-defmodule MyApp.Factories.UserFactory do
-  @behaviour ExZample
-
-  alias MyApp.User
-
-  @impl true
-  def example do
-    %User{first_name: "Abili De Bob", age: 12}
-  end
-end
-
-# later
-alias MyApp.Factories.UserFactory
-ExZample.build(UserFactory)
-# => %MyApp.User{first_name: "Abili De Bob", age: 12}
-```
-
-You can implement the `example/1` callback when you want to have full control
-in how your factories are built:
-
-```elixir
-@impl true
-def example(attrs) do
-  age = Map.get(attrs, :age, 12) * 2
-  first_name = Map.get(attrs, :first_name, "Abilid") <> " De Bob"
-
-  %User{first_name: first_name, age: age}
-end
-
-# later
-build(:user, first_name: "Alice")
-# => %User{first_name: "Alice De Bob", age: 24}
-```
-
-## Using aliases
-
-If you want to use a nickname for your factories, you can register aliases.
-For example, in your `test_helper.ex` you can call `ExZample.config_aliases/1`.
-
-```elixir
-# in your test_helper.exs
-ExZample.config_aliases(%{user: UserFactory})
-
-# in your app_test.exs
-test "activates an user" do
-  user = ExZample.build(:user)
-
-  assert :ok == MyApp.active_user(user)
-end
-```
+This is the basics of what you need to start using `ExZample`. The later section
+of this README we'll dig in details of how this library works.
 
 ## Building your factories
 
@@ -117,19 +73,6 @@ You can use the `build/2`, `build_pair/2` and `build_list/3` to generate data
 without side-effects.
 
 ```elixir
-ExZample.build(UserFactory, age: 42)
-# => %MyApp.User{first_name: "Abili De Bob", age: 42}
-
-ExZample.build_pair(UserFactory, age: 42)
-# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
-
-ExZample.build_list(100, UserFactory, age: 42)
-# => [
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
-#      ...
-#   ]
-
 # or using aliases
 ExZample.build(:user, age: 42)
 # => %MyApp.User{first_name: "Abili De Bob", age: 42}
@@ -138,6 +81,20 @@ ExZample.build_pair(:user, age: 42)
 # => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
 
 ExZample.build_list(100, :user, age: 42)
+# => [
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      ...
+#   ]
+
+# or using the modules directly
+ExZample.build(UserFactory, age: 42)
+# => %MyApp.User{first_name: "Abili De Bob", age: 42}
+
+ExZample.build_pair(UserFactory, age: 42)
+# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+
+ExZample.build_list(100, UserFactory, age: 42)
 # => [
 #      %MyApp.User{first_name: "Abili De Bob", age: 42},
 #      %MyApp.User{first_name: "Abili De Bob", age: 42},
@@ -165,13 +122,8 @@ Then, in your factories or in your tests you can invoke them using
 `ExZample.sequence/1` this:
 
 ```elixir
-defmodule MyApp.Factories.UserFactory do
-  alias MyApp.User
-
-  import ExZample
-
-  @impl ExZample
-  def example do
+factory :user do
+  example do
     %User{
       email: sequence(:user_email),
       name: "Abili de bob"
@@ -193,11 +145,26 @@ each request.
 ### ExZample and Umbrella apps
 
 If you want to avoid the factories or sequences leaking through different apps
-in your umbrella, you can add them under a scope.
+in your umbrella, you can define them under a scope.
 
 ```elixir
+# defining factories
+defmodule MyApp.Factories do
+  use ExZample.DSL, scope: :app_a
+
+  alias ExZample.User
+
+  factory :user do
+    example do
+      %User{
+        first_name: "Abili De Bob",
+        age: 12,
+      }
+    end
+  end
+end
+
 # in apps/myapp_a/test/test_helper.ex
-ExZample.config_aliases(:app_a, %{user: UserFactory})
 ExZample.create_sequence(:app_a, :user_email, &"user_#{&1}@test.test")
 ```
 
@@ -243,6 +210,116 @@ end
 
 Using the the configuration above and narrowing the scope you can have stronger
 boundary between your Umbrella apps.
+
+## Using structs as factories.
+
+All your module need to do to use the `ExZample` functions is your implement
+the `example/0` or `example/1` callback.
+
+```elixir
+defmodule MyApp.User do
+  @behaviour ExZample
+  defstruct first_name: nil, age: 21
+
+  @impl true
+  def example do
+    %__MODULE__{first_name: "Abili De Bob", age: 12}
+  end
+end
+
+# later
+ExZample.build(MyApp.User)
+# => %MyApp.User{first_name: "Abili De Bob", age: 12}
+```
+
+When you implement the `example` callback, any module can be a factory.
+
+## Defining manually your factory modules
+
+If you want to separate your test data from your app code, you can define a
+factory in a different module from your struct:
+
+```elixir
+defmodule MyApp.User do
+  defstruct first_name: nil, age: 21
+end
+
+defmodule MyApp.Factories.UserFactory do
+  @behaviour ExZample
+
+  alias MyApp.User
+
+  @impl true
+  def example do
+    %User{first_name: "Abili De Bob", age: 12}
+  end
+end
+
+# later
+alias MyApp.Factories.UserFactory
+ExZample.build(UserFactory)
+# => %MyApp.User{first_name: "Abili De Bob", age: 12}
+```
+
+You don't to type all this boilerplate code if you use the `ExZample.DSL`. You
+can implement the `example/1` callback when you want to have full control
+in how your factories are built:
+
+```elixir
+@impl true
+def example(attrs) do
+  age = Map.get(attrs, :age, 12) * 2
+  first_name = Map.get(attrs, :first_name, "Abilid") <> " De Bob"
+
+  %User{first_name: first_name, age: age}
+end
+
+# later
+build(:user, first_name: "Alice")
+# => %User{first_name: "Alice De Bob", age: 24}
+```
+
+The `Example.DSL` also supports the full control of your factories:
+
+```elixir
+factory :user do
+  import Map, only: [get: 3]
+
+  example(attrs) do
+    %User{
+      first_name: attrs |> get(:first_name, " De Bob") |> prefix(),
+      age: get(attrs, :age, 12) * 2,
+    }
+  end
+
+  defp prefix(string), do: "Abilid #{string}"
+end
+```
+
+As you can see, the body of the `factory` directive works as any Elixir module.
+You can import and define helpers functions.
+
+## Manually defining your aliases
+
+If don't want to use the `ExZample.DSL`, you can manually define a nickname for your factories. For example, in your `test_helper.ex`, after starting `ex_zample`, you
+can call `ExZample.config_aliases/1`.
+
+```elixir
+# in your test_helper.exs
+
+# Don't forget to start :ex_zample app!
+:ok = Application.ensure_started(:ex_zample)
+
+# defining manually your aliases
+ExZample.config_aliases(%{user: UserFactory})
+
+# later in your app_test.exs
+test "activates an user" do
+  user = ExZample.build(:user)
+
+  assert :ok == MyApp.active_user(user)
+end
+```
 
 ## Inspiration
 
