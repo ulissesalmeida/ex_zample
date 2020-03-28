@@ -150,7 +150,7 @@ defmodule ExZample.DSL do
       end)
 
     file_name = Macro.underscore(caller.module) <> ".ex_zample_manifest.elixir"
-    file = Path.join(Mix.Project.manifest_path(), file_name)
+    file = Path.join([Mix.Project.build_path(), "/ex_zample/manifest/", file_name])
 
     Manifest.write!(file, factories)
   end
