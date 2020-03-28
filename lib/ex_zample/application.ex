@@ -20,8 +20,8 @@ defmodule ExZample.Application do
 
   def load_manifest do
     files =
-      Mix.Project.manifest_path()
-      |> Path.join("**/*.ex_zample_manifest.elixir")
+      Mix.Project.build_path()
+      |> Path.join("/ex_zample/manifest/**/*.ex_zample_manifest.elixir")
       |> Path.wildcard()
 
     Enum.each(files, fn file ->
