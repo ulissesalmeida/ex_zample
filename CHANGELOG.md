@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2020-03-29
+
+### Fixed
+
+- Fixed DSL factories for umbrella apps by [@feliperenan](https://github.com/feliperenan)
+
 ## [0.6.0] - 2020-03-26
 
 ### Added
