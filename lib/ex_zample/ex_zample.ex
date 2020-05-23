@@ -116,8 +116,8 @@ defmodule ExZample do
   default counter starts from `1` and increments `1` by `1`.
 
   ## Examples
-      iex> ExZample.create_sequence(:user_id)
-      ...> Enum.map(1..10, fn _ -> ExZample.sequence(:user_id) end)
+      iex> ExZample.create_sequence(:customer_id)
+      ...> Enum.map(1..10, fn _ -> ExZample.sequence(:customer_id) end)
       [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   """
   since("0.4.0")
@@ -135,14 +135,14 @@ defmodule ExZample do
   counter and then you can transform in anything you want.
 
   ## Examples
-      iex> ExZample.create_sequence(:my_app, :user_id)
+      iex> ExZample.create_sequence(:my_app, :customer_id)
       ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
-      ...> ExZample.sequence(:user_id)
+      ...> ExZample.sequence(:customer_id)
       1
 
-      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
-      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
-      ["user_1", "user_2", "user_3"]
+      iex> ExZample.create_sequence(:customer_id, &("customer_" <> to_string(&1)))
+      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:customer_id) end)
+      ["customer_1", "customer_2", "customer_3"]
   """
   since("0.4.0")
   @spec create_sequence(scope_or_name :: atom, sequence_fun_or_name :: sequence_fun | atom) :: :ok
@@ -165,10 +165,10 @@ defmodule ExZample do
   you can transform in anything you want.
 
   ## Examples
-      iex> ExZample.create_sequence(:my_app, :user_id, &("user_" <> to_string(&1)))
+      iex> ExZample.create_sequence(:my_app, :customer_id, &("customer_" <> to_string(&1)))
       ...> ExZample.ex_zample(%{ex_zample_scope: :my_app})
-      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:user_id) end)
-      ["user_1", "user_2", "user_3"]
+      ...> Enum.map(1..3, fn _ -> ExZample.sequence(:customer_id) end)
+      ["customer_1", "customer_2", "customer_3"]
   """
   since("0.4.0")
   @spec create_sequence(atom, atom, sequence_fun) :: :ok
@@ -396,9 +396,9 @@ defmodule ExZample do
   Returns the current counter registered in the given sequence `name`.
 
   ## Examples
-      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
-      ...> ExZample.sequence(:user_id)
-      "user_1"
+      iex> ExZample.create_sequence(:customer_id, &("customer_" <> to_string(&1)))
+      ...> ExZample.sequence(:customer_id)
+      "customer_1"
   """
   since("0.4.0")
   @spec sequence(atom) :: term
@@ -421,9 +421,9 @@ defmodule ExZample do
   the given `count`.
 
   ## Examples
-      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
-      ...> ExZample.sequence_list(3, :user_id)
-      ["user_1", "user_2", "user_3"]
+      iex> ExZample.create_sequence(:customer_id, &("customer_" <> to_string(&1)))
+      ...> ExZample.sequence_list(3, :customer_id)
+      ["customer_1", "customer_2", "customer_3"]
   """
   since("0.4.0")
   @spec sequence_list(pos_integer, atom) :: [term]
@@ -436,9 +436,9 @@ defmodule ExZample do
   Same as `sequence/1`, but returns a pair of sequence items.
 
   ## Examples
-      iex> ExZample.create_sequence(:user_id, &("user_" <> to_string(&1)))
-      ...> ExZample.sequence_pair(:user_id)
-      {"user_1", "user_2"}
+      iex> ExZample.create_sequence(:customer_id, &("customer_" <> to_string(&1)))
+      ...> ExZample.sequence_pair(:customer_id)
+      {"customer_1", "customer_2"}
   """
   since("0.4.0")
   @spec sequence_pair(atom) :: {term, term}

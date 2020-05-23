@@ -3,9 +3,11 @@ defmodule ExZample.Manifest do
 
   @manifest_vsn 1
 
-  def write!(file, factories) do
+  @doc false
+  def write!(file, factories, sequences) do
     write_manifest!(file, %{
-      aliases: Enum.reduce(factories, %{}, &build_factory_manifest/2)
+      aliases: Enum.reduce(factories, %{}, &build_factory_manifest/2),
+      sequences: Enum.reduce(sequences, %{}, &build_sequence_manifest/2)
     })
   end
 
@@ -18,6 +20,15 @@ defmodule ExZample.Manifest do
     )
   end
 
+  defp build_sequence_manifest({scope, name, sequence_fun}, manifest) do
+    Map.update(
+      manifest,
+      scope,
+      %{name => sequence_fun},
+      &put_alias(&1, name, sequence_fun, scope)
+    )
+  end
+
   defp write_manifest!(file, manifest) do
     binary = :erlang.term_to_binary({@manifest_vsn, manifest})
 
@@ -25,22 +36,24 @@ defmodule ExZample.Manifest do
     File.write!(file, binary)
   end
 
-  defp put_alias(aliases, name, module, scope) do
-    Map.update(aliases, name, module, fn existent_factory ->
+  defp put_alias(aliases, name, new_item, scope) do
+    Map.update(aliases, name, new_item, fn existent_item ->
       raise ArgumentError, """
       The alias #{inspect(name)} already exists!
-      It is registered with the factory #{inspect(existent_factory)} and
-      can't be replaced with the new #{inspect(module)} in #{inspect(scope)} scope.
+      It is registered with #{inspect(existent_item)} and
+      can't be replaced with the new #{inspect(new_item)} in #{inspect(scope)} scope.
       Rename the alias or add it in a different scope.
       """
     end)
   end
 
+  @doc false
   def ensure_loaded(file) do
     manifest = read(file)
 
     %{
-      aliases: Enum.reduce(manifest.aliases, %{}, &ensure_scope_exists/2)
+      aliases: Enum.reduce(manifest.aliases, %{}, &ensure_definitions_exists/2),
+      sequences: Enum.reduce(manifest.sequences, %{}, &ensure_definitions_exists/2)
     }
   end
 
@@ -50,12 +63,12 @@ defmodule ExZample.Manifest do
       manifest
     else
       _ ->
-        %{aliases: %{}}
+        %{aliases: %{}, sequences: %{}}
     end
   end
 
-  defp ensure_scope_exists({scope, aliases}, loaded_scopes) do
-    loaded_aliases = Enum.reduce(aliases, %{}, &ensure_factory_exists/2)
+  defp ensure_definitions_exists({scope, aliases}, loaded_scopes) do
+    loaded_aliases = Enum.reduce(aliases, %{}, &ensure_item_exists/2)
 
     if loaded_aliases == %{} do
       loaded_scopes
@@ -64,7 +77,17 @@ defmodule ExZample.Manifest do
     end
   end
 
-  defp ensure_factory_exists({name, factory_module}, existent_factories) do
+  # NOTE: for sequences
+  defp ensure_item_exists({name, {module, fun, args} = sequence}, existent_sequences) do
+    if Code.ensure_loaded?(module) && function_exported?(module, fun, length(args)) do
+      Map.put(existent_sequences, name, sequence)
+    else
+      existent_sequences
+    end
+  end
+
+  # NOTE: for factories
+  defp ensure_item_exists({name, factory_module}, existent_factories) do
     if Code.ensure_loaded?(factory_module) do
       Map.put(existent_factories, name, factory_module)
     else
@@ -72,6 +95,7 @@ defmodule ExZample.Manifest do
     end
   end
 
+  @doc false
   def persist!(file, manifest) do
     if manifest.aliases == %{} do
       File.rm(file)

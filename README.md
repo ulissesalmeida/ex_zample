@@ -45,11 +45,14 @@ defmodule MyApp.Factories do
   factory :user do
     example do
       %User{
+        id: sequence(:user_id),
         first_name: "Abili De Bob",
         age: 12,
       }
     end
   end
+
+  sequence :user_id
 end
 
 # Don't forget to start :ex_zample app!
@@ -61,7 +64,7 @@ Now you can invoke them like this:
 
 ```elixir
 ExZample.build(:user)
-# => %MyApp.User{first_name: "Abili De Bob", age: 12}
+# => %MyApp.User{id: 1, first_name: "Abili De Bob", age: 12}
 ```
 
 This is the basics of what you need to start using `ExZample`. The later section
@@ -75,29 +78,29 @@ without side-effects.
 ```elixir
 # or using aliases
 ExZample.build(:user, age: 42)
-# => %MyApp.User{first_name: "Abili De Bob", age: 42}
+# => %MyApp.User{id: 1, first_name: "Abili De Bob", age: 42}
 
 ExZample.build_pair(:user, age: 42)
-# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+# => {%MyApp.User{id: 2, first_name: "Abili De Bob", age: 42}, %MyApp.User{id: 3, first_name: "Abili De Bob", age: 42}}
 
 ExZample.build_list(100, :user, age: 42)
 # => [
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{id: 4, first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{id: 5, first_name: "Abili De Bob", age: 42},
 #      ...
 #   ]
 
 # or using the modules directly
 ExZample.build(UserFactory, age: 42)
-# => %MyApp.User{first_name: "Abili De Bob", age: 42}
+# => %MyApp.User{id: 106, first_name: "Abili De Bob", age: 42}
 
 ExZample.build_pair(UserFactory, age: 42)
-# => {%MyApp.User{first_name: "Abili De Bob", age: 42}, %MyApp.User{first_name: "Abili De Bob", age: 42}}
+# => {%MyApp.User{id: 107, first_name: "Abili De Bob", age: 42}, %MyApp.User{id: 108, first_name: "Abili De Bob", age: 42}}
 
 ExZample.build_list(100, UserFactory, age: 42)
 # => [
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
-#      %MyApp.User{first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{id: 110, first_name: "Abili De Bob", age: 42},
+#      %MyApp.User{id: 111, first_name: "Abili De Bob", age: 42},
 #      ...
 #   ]
 ```
@@ -107,15 +110,18 @@ factories.
 
 ## Sequences
 
-Sequences are global counters that you can user in your tests. When your test suite starts you can create sequences using `ExZample.create_sequence`. For example,
-in your `test_helper.exs`:
+Sequences are global stateful counters that you can user in your tests. You can
+define them using DSL like this:
 
 ```elixir
-# test_helper.exs
-:ok = Application.ensure_started(:ex_zample)
+defmodule MyApp.Factories do
+  use ExZample.DSL
 
-ExZample.create_sequence(:order_id)
-ExZample.create_sequence(:user_email, &"email_#{&1}@test.test")
+# ...
+
+  sequence :order_id
+  sequence :user_email, return: &"email_#{&1}@test.test"
+end
 ```
 
 Then, in your factories or in your tests you can invoke them using
@@ -138,6 +144,17 @@ test "tracks an order" do
 end
 ```
 
+You can manually create your sequences after your test suite starts by using
+`ExZample.create_sequence`. For example, in your `test_helper.exs`:
+
+```elixir
+# test_helper.exs
+:ok = Application.ensure_started(:ex_zample)
+
+ExZample.create_sequence(:order_id)
+ExZample.create_sequence(:user_email, &"email_#{&1}@test.test")
+```
+
 Sequences are `Agent` processes, no matter how many processes tries to get the
 next value, the OTP will guarantee it will always generate a different one for
 each request.
@@ -148,7 +165,7 @@ If you want to avoid the factories or sequences leaking through different apps
 in your umbrella, you can define them under a scope.
 
 ```elixir
-# defining factories
+# defining factories and sequences
 defmodule MyApp.Factories do
   use ExZample.DSL, scope: :app_a
 
@@ -157,15 +174,15 @@ defmodule MyApp.Factories do
   factory :user do
     example do
       %User{
+        email: sequence(:user_email)
         first_name: "Abili De Bob",
         age: 12,
       }
     end
   end
-end
 
-# in apps/myapp_a/test/test_helper.ex
-ExZample.create_sequence(:app_a, :user_email, &"user_#{&1}@test.test")
+  sequence :user_email, return: &"user_#{&1}@test.test"
+end
 ```
 
 Then, you can use `ExZample.ex_zample/1` to narrow the scope of lookups
@@ -213,7 +230,7 @@ boundary between your Umbrella apps.
 
 ## Using structs as factories.
 
-All your module need to do to use the `ExZample` functions is your implement
+All your module need to do to use the `ExZample` functions is: implement the
 the `example/0` or `example/1` callback.
 
 ```elixir
@@ -261,8 +278,7 @@ ExZample.build(UserFactory)
 # => %MyApp.User{first_name: "Abili De Bob", age: 12}
 ```
 
-You don't to type all this boilerplate code if you use the `ExZample.DSL`. You
-can implement the `example/1` callback when you want to have full control
+You can implement the `example/1` callback when you want to have full control
 in how your factories are built:
 
 ```elixir
@@ -279,6 +295,7 @@ build(:user, first_name: "Alice")
 # => %User{first_name: "Alice De Bob", age: 24}
 ```
 
+You don't need to type all this boilerplate code if you use the `ExZample.DSL`.
 The `Example.DSL` also supports the full control of your factories:
 
 ```elixir

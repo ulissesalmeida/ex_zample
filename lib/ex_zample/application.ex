@@ -10,17 +10,17 @@ defmodule ExZample.Application do
     children = [
       {DynamicSupervisor, name: ExZample.SequenceSupervisor, strategy: :one_for_one},
       {Registry,
-       name: ExZample.SequenceRegistry, keys: :unique, partitions: System.schedulers_online()},
-      {Task, &load_manifest/0}
+       name: ExZample.SequenceRegistry, keys: :unique, partitions: System.schedulers_online()}
     ]
 
     opts = [strategy: :one_for_all, name: ExZample.Supervisor]
     Supervisor.start_link(children, opts)
   end
 
-  def load_manifest do
+  @impl true
+  def start_phase(:load_manifest, _start_type, [manifest_dir]) do
     files =
-      Mix.Project.build_path()
+      manifest_dir
       |> Path.join("/ex_zample/manifest/**/*.ex_zample_manifest.elixir")
       |> Path.wildcard()
 
@@ -31,7 +31,22 @@ defmodule ExZample.Application do
         ExZample.config_aliases(scope, aliases)
       end)
 
+      manifest.sequences
+      |> Enum.flat_map(&extract_sequence_fun/1)
+      |> Enum.each(fn {scope, name, sequence_fun} ->
+        ExZample.create_sequence(scope, name, sequence_fun)
+      end)
+
       Manifest.persist!(file, manifest)
+    end)
+
+    :ok
+  end
+
+  defp extract_sequence_fun({scope, aliases}) do
+    Enum.map(aliases, fn {name, {mod, fun, args}} ->
+      sequence_fun = apply(mod, fun, args)
+      {scope, name, sequence_fun}
     end)
   end
 end

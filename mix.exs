@@ -31,6 +31,7 @@ defmodule ExZample.MixProject do
   def application do
     [
       mod: {ExZample.Application, []},
+      start_phases: [load_manifest: [Mix.Project.build_path()]],
       extra_applications: [:logger]
     ]
   end

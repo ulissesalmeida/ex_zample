@@ -52,7 +52,7 @@ defmodule ExZample.DSLTest do
     end
   end
 
-  describe "alias configuartion" do
+  describe "alias configuartion for factories" do
     setup :ex_zample
 
     test "generates for simple factories" do
@@ -81,6 +81,49 @@ defmodule ExZample.DSLTest do
     @tag ex_zample_scope: :overridden_scope
     test "generates for global scoped factories with overridden scope" do
       assert %User{first_name: "Overriden Global Scope: First Name"} = build(:user)
+    end
+  end
+
+  describe "sequences generation" do
+    alias ExZample.{Factories, ScopedFactories}
+
+    test "generates simple sequences" do
+      assert 1 == Factories.user_id_sequence().(1)
+    end
+
+    test "generates scoped sequences" do
+      assert "ex_zample_user_1" == Factories.ex_zample_user_id_sequence().(1)
+    end
+
+    test "generates global scoped sequences" do
+      assert "scoped_user_1" == ScopedFactories.scoped_user_id_sequence().(1)
+    end
+
+    test "generates global scoped factories with overridden scope" do
+      assert "overridden_scope_user_1" = ScopedFactories.overridden_scope_user_id_sequence().(1)
+    end
+  end
+
+  describe "alias configuartion for sequences" do
+    setup :ex_zample
+
+    test "generates simple sequences" do
+      assert 1 == sequence(:user_id)
+    end
+
+    @tag ex_zample_scope: :ex_zample
+    test "generates scoped sequences" do
+      assert "ex_zample_user_1" == sequence(:user_id)
+    end
+
+    @tag ex_zample_scope: :scoped
+    test "generates global scoped sequences" do
+      assert "scoped_user_1" == sequence(:user_id)
+    end
+
+    @tag ex_zample_scope: :overridden_scope
+    test "generates global scoped factories with overridden scope" do
+      assert "overridden_scope_user_1" = sequence(:user_id)
     end
   end
 end
