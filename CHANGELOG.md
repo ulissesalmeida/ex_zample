@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2020-06-06
+
+### Added
+
+- Sequence DSL
+
 ## [0.6.1] - 2020-03-29
 
 ### Fixed
