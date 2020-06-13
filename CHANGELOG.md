@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2020-06-13
+
+### Added
+
+- `ExZample.map_for/3`
+- `ExZample.map_list_for/2`
+- `ExZample.map_pair_for/1`
+
 ## [0.7.0] - 2020-06-06
 
 ### Added
