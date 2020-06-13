@@ -13,6 +13,11 @@ defmodule ExZample.UserWithDefaults do
   defstruct first_name: "A name", last_name: "Last Name"
 end
 
+defmodule ExZample.SocialUser do
+  @moduledoc false
+  defstruct ~w(user friends)a
+end
+
 defmodule ExZample.UserWithDefaultsAndExample do
   @moduledoc false
   defstruct first_name: "Default name", last_name: "Default Last Name"
@@ -33,7 +38,7 @@ defmodule ExZample.Factories do
 
   use ExZample.DSL
 
-  alias ExZample.User
+  alias ExZample.{SocialUser, User}
 
   factory :user do
     example do
@@ -43,6 +48,15 @@ defmodule ExZample.Factories do
         last_name: "Last Name",
         age: 21,
         email: "test@test.test"
+      }
+    end
+  end
+
+  factory :social_user do
+    example do
+      %SocialUser{
+        user: build(:user),
+        friends: build_list(3, :user)
       }
     end
   end

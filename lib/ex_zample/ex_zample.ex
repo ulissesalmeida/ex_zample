@@ -357,6 +357,102 @@ defmodule ExZample do
   def build_pair(factory, attrs \\ nil), do: {build(factory, attrs), build(factory, attrs)}
 
   @doc """
+  Builds a map with given `factory_or_alias` module. Has the same mechanism of
+  `build/2`.
+
+  ## Examples
+
+      iex> ExZample.map_for(User)
+      %{age: nil, email: nil, first_name: nil, id: nil, last_name: nil}
+
+      iex> ExZample.map_for(UserFactory)
+      %{age: 21, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
+
+      iex> ExZample.map_for(:book)
+      %{code: "1321", title: "The Book's Title"}
+
+      iex> ExZample.map_for(User, age: 45)
+      %{age: 45, email: nil, first_name: nil, id: nil, last_name: nil}
+
+      iex> ExZample.map_for(UserFactory, age: 45)
+      %{age: 45, email: "test@test.test", first_name: "First Name", id: 1, last_name: "Last Name"}
+
+      iex> ExZample.map_for(:book, code: "007")
+      %{code: "007", title: "The Book's Title"}
+  """
+  since("0.8.0")
+  @spec map_for(factory, Enum.t() | nil) :: map
+  def map_for(factory, attributes \\ nil), do: factory |> build(attributes) |> to_map()
+
+  defp to_map(map) when is_map(map),
+    do: for({k, v} <- Map.from_struct(map), into: %{}, do: {k, to_map(v)})
+
+  defp to_map(list) when is_list(list),
+    do: Enum.map(list, &to_map/1)
+
+  defp to_map(item), do: item
+
+  @doc """
+  Same as `map_for/2`, but returns a list with where the size is the given
+  `count`.
+
+  ## Examples
+
+      iex> ExZample.map_list_for(3, User)
+      [%{age: nil, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: nil, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: nil, email: nil, first_name: nil, id: nil, last_name: nil}]
+
+      iex> ExZample.map_list_for(3, :book)
+      [%{code: "1321", title: "The Book's Title"},
+      %{code: "1321", title: "The Book's Title"},
+      %{code: "1321", title: "The Book's Title"}]
+
+      iex> ExZample.map_list_for(3, User, age: 45)
+      [%{age: 45, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: 45, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: 45, email: nil, first_name: nil, id: nil, last_name: nil}]
+
+      iex> ExZample.map_list_for(3, :book, code: "007")
+      [%{code: "007", title: "The Book's Title"},
+      %{code: "007", title: "The Book's Title"},
+      %{code: "007", title: "The Book's Title"}]
+  """
+  since("0.8.0")
+  @spec map_list_for(count :: pos_integer, factory, attrs :: Enum.t() | nil) :: [struct]
+  def map_list_for(count, factory, attrs \\ nil)
+
+  def map_list_for(0, _factory, _attrs), do: []
+
+  def map_list_for(count, factory, attrs) when is_greater_than_0(count),
+    do: Enum.map(1..count, fn _ -> map_for(factory, attrs) end)
+
+  @doc """
+  Same as `map_for/2`, but returns a tuple with a pair of maps.
+
+  ## Examples
+
+      iex> ExZample.map_pair_for(User)
+      {%{age: nil, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: nil, email: nil, first_name: nil, id: nil, last_name: nil}}
+
+      iex> ExZample.map_pair_for(:book)
+      {%{code: "1321", title: "The Book's Title"},
+      %{code: "1321", title: "The Book's Title"}}
+
+      iex> ExZample.map_pair_for(User, age: 45)
+      {%{age: 45, email: nil, first_name: nil, id: nil, last_name: nil},
+      %{age: 45, email: nil, first_name: nil, id: nil, last_name: nil}}
+
+      iex> ExZample.map_pair_for(:book, code: "007")
+      {%{code: "007", title: "The Book's Title"},
+      %{code: "007", title: "The Book's Title"}}
+  """
+  since("0.8.0")
+  @spec map_pair_for(factory, attrs :: Enum.t() | nil) :: {struct, struct}
+  def map_pair_for(factory, attrs \\ nil), do: {map_for(factory, attrs), map_for(factory, attrs)}
+
+  @doc """
   Utiliy function that you can define the scope that `ExZample` will look
   for the aliases. If no scope is defined, `:global` is the default
   scope.
