@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ExZample.params_for/3`
+- `ExZample.params_list_for/2`
+- `ExZample.params_pair_for/1`
+
 ## [0.8.0] - 2020-06-13
 
 ### Added
