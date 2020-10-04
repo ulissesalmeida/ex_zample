@@ -39,10 +39,21 @@ defmodule ExZample do
   since("0.5.0")
   @callback example(attrs :: map) :: struct
 
+  @doc """
+  Invoked every time you insert your data using `ExZample` module.
+
+  You need to return the Ecto `Repo` module that ExZample should use
+  to insert records in database
+
+  This callback is optional if the goal is to use only in memory.
+  """
+  since("0.10.0")
+  @callback ecto_repo :: module
+
   @type factory :: module
   @type sequence_fun :: (pos_integer -> term)
 
-  @optional_callbacks example: 0, example: 1
+  @optional_callbacks example: 0, example: 1, ecto_repo: 0
 
   defguardp is_greater_than_0(term) when is_integer(term) and term > 0
 
@@ -288,24 +299,29 @@ defmodule ExZample do
     end
   end
 
-  defp lookup_scope do
-    if scope = Process.get(:ex_zample_scope) do
-      scope
+  defp lookup_scope, do: lookup_in_processes_and_set(:ex_zample_scope, :global)
+
+  defp lookup_in_processes_and_set(key, default) do
+    if value = Process.get(key) do
+      value
     else
-      scope = lookup_in_processes(:"$callers") || lookup_in_processes(:"$ancestors") || :global
+      value =
+        lookup_in_processes(key, :"$callers") || lookup_in_processes(key, :"$ancestors") ||
+          default
+
       # NOTE: Faster future lookups
-      Process.put(:ex_zample_scope, scope)
-      scope
+      Process.put(key, value)
+      value
     end
   end
 
-  defp lookup_in_processes(key),
-    do: key |> Process.get() |> List.wrap() |> Enum.find_value(&get_process_scope/1)
+  defp lookup_in_processes(key, process),
+    do: process |> Process.get() |> List.wrap() |> Enum.find_value(&get_process_key(key, &1))
 
-  defp get_process_scope(name_or_pid) do
+  defp get_process_key(key, name_or_pid) do
     pid = if is_atom(name_or_pid), do: Process.whereis(name_or_pid), else: name_or_pid
     {:dictionary, dictionary} = Process.info(pid, :dictionary)
-    dictionary[:ex_zample_scope]
+    dictionary[key]
   end
 
   @doc """
@@ -551,9 +567,15 @@ defmodule ExZample do
     do: {params_for(factory, attrs), params_for(factory, attrs)}
 
   @doc """
-  Utiliy function that you can define the scope that `ExZample` will look
-  for the aliases. If no scope is defined, `:global` is the default
-  scope.
+  Utiliy function that you can define severial settings that `ExZample` will look
+  for before executing their functions.
+
+  ## Options
+
+  * `:ex_zample_scope`, the scope that ExZample should look up for aliases. If no
+  scope is defined, `:global` is the default scope.
+  * `:ex_zample_ecto_repo`, the Ecto repo that ExZample should use to run their insert
+  functions.
 
   This function works well with `setup/1` callback of `ExUnit` and `@tags`.
   For example:
@@ -562,7 +584,7 @@ defmodule ExZample do
         use ExUnit.Case
         import ExZample
 
-        @moduletag %{ex_zample_scope: :my_app}
+        @moduletag ex_zample_scope: :my_app
 
         setup :ex_zample
 
@@ -576,11 +598,15 @@ defmodule ExZample do
   """
   since("0.3.0")
   @spec ex_zample(map) :: :ok
-  def ex_zample(scope) when is_map(scope) do
-    if ex_zample_scope = scope[:ex_zample_scope] do
+  def ex_zample(settings) when is_map(settings) do
+    if ex_zample_scope = settings[:ex_zample_scope] do
       Process.put(:ex_zample_scope, ex_zample_scope)
     else
       Process.put(:ex_zample_scope, :global)
+    end
+
+    if ecto_repo = settings[:ex_zample_ecto_repo] do
+      Process.put(:ex_zample_ecto_repo, ecto_repo)
     end
 
     :ok
@@ -637,6 +663,144 @@ defmodule ExZample do
   since("0.4.0")
   @spec sequence_pair(atom) :: {term, term}
   def sequence_pair(name), do: {sequence(name), sequence(name)}
+
+  if Code.ensure_loaded?(Ecto.Repo) do
+    @doc """
+    Inserts in the repository the example built by the `factory_or_alias` module.
+
+    If the given factory exports the `c:repo/0` function it will use it call the
+    `insert!` function. Beyond that, it works similar as `build/2`.
+
+    If will override the generated data with the given `attributes`.
+
+    ## Options
+
+      * `ecto_opts`, when given, it will be forwarded to the second argument of
+      `Ecto.Repo.insert/2`
+
+    ## Examples
+
+        iex> ExZample.insert(:player)
+        %ExZample.RPG.Player{}
+
+        iex> ExZample.insert(:player, email: "testmail")
+        %ExZample.RPG.Player{email: "testmail"}
+    """
+    since("0.10.0")
+    @spec insert(factory, Enum.t() | nil) :: struct()
+    def insert(factory, attributes \\ nil)
+
+    def insert(factory, attributes) when is_list(attributes) do
+      {opts, attributes} = Keyword.split(attributes, [:ecto_opts])
+      insert(factory, attributes, opts)
+    end
+
+    def insert(factory, attributes), do: insert(factory, attributes, [])
+
+    @doc """
+    Same as `insert/2`, but the `attributes` and `opts` are explicit
+    separated.
+
+    ## Options
+
+      * `ecto_opts`, when given, it will be forwarded to the second argument of
+      `Ecto.Repo.insert/2`
+
+    ## Examples
+
+        iex> ExZample.insert(:player, %{email: "testmail"}, ecto_opts: [prefix: "private"])
+        %ExZample.RPG.Player{email: "testmail"}
+    """
+    since("0.10.0")
+    @spec insert(factory, Enum.t() | nil, Keyword.t()) :: struct()
+    def insert(factory, attributes, opts) do
+      record = build(factory, attributes)
+      repo = lookup_in_processes_and_set(:ex_zample_ecto_repo, :not_in_processes)
+      repo = if repo == :not_in_processes, do: lookup_repo(factory), else: repo
+
+      repo.insert!(record, Keyword.get(opts, :ecto_opts, []))
+    end
+
+    defp lookup_repo(factory) do
+      factory_module =
+        if function_exported?(factory, :ecto_repo, 0) do
+          factory
+        else
+          scope = lookup_scope()
+          aliases = get_config(scope)[:aliases]
+          aliases[factory]
+        end
+
+      factory_module.ecto_repo() ||
+        raise ArgumentError, "Your #{factory_module}.repo/0 should return a ecto Repo module"
+    end
+
+    @doc """
+    Same as `insert/2`, but returns a tuple with a pair of structs.
+
+    ## Examples
+
+        iex> ExZample.insert_pair(:character)
+        {%ExZample.RPG.Character{}, %ExZample.RPG.Character{}}
+
+        iex> ExZample.insert_pair(:character, name: "Todd")
+        {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+    """
+    since("0.10.0")
+    @spec insert_pair(factory, Enum.t() | nil) :: {struct(), struct()}
+    def insert_pair(factory, attributes \\ nil),
+      do: {insert(factory, attributes), insert(factory, attributes)}
+
+    @doc """
+    Same as `insert/3`, but returns a tuple with a pair of structs.
+
+    ## Examples
+
+        iex> ExZample.insert_pair(:character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+        {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+    """
+    since("0.10.0")
+    @spec insert_pair(factory, Enum.t() | nil, Keyword.t()) :: {struct(), struct()}
+    def insert_pair(factory, attributes, opts),
+      do: {insert(factory, attributes, opts), insert(factory, attributes, opts)}
+
+    @doc """
+    Same as `insert/2`, but returns a list with where the size is the given
+    `count`.
+
+    ## Examples
+
+        iex> ExZample.insert_list(3, :character)
+        [%ExZample.RPG.Character{}, %ExZample.RPG.Character{}, %ExZample.RPG.Character{}]
+
+        iex> ExZample.insert_list(3, :character, name: "Todd")
+        [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+    """
+    since("0.10.0")
+    @spec insert_list(pos_integer, factory, Enum.t() | nil) :: [struct()]
+    def insert_list(count, factory, attributes \\ nil)
+    def insert_list(0, _factory, _attributes), do: []
+
+    def insert_list(count, factory, attributes) when is_greater_than_0(count),
+      do: Enum.map(1..count, fn _ -> insert(factory, attributes) end)
+
+    @doc """
+    Same as `insert/3`, but returns a list with where the size is the given
+    `count`.
+
+    ## Examples
+
+        iex> ExZample.insert_list(3, :character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+        [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+    """
+    since("0.10.0")
+    @spec insert_list(pos_integer, factory, Enum.t() | nil, Keyword.t()) :: [struct()]
+    def insert_list(count, factory, attributes, opts)
+    def insert_list(0, _factory, _attributes, _opts), do: []
+
+    def insert_list(count, factory, attributes, opts) when is_greater_than_0(count),
+      do: Enum.map(1..count, fn _ -> insert(factory, attributes, opts) end)
+  end
 
   defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}
 

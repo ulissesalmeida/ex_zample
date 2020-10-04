@@ -29,7 +29,8 @@ defmodule ExZample.Test do
     end)
   end
 
-  doctest ExZample
+  doctest ExZample,
+    except: [insert: 2, insert: 3, insert_pair: 2, insert_pair: 3, insert_list: 3, insert_list: 4]
 
   describe "config_aliases/1" do
     import ExZample, only: [config_aliases: 1]

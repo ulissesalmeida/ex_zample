@@ -126,17 +126,18 @@ defmodule ExZample.BuildTest do
 
     # NOTE: Elixir 1.7 and 1.6 doesn't support $callers, drop their support
     # before release 1.0.0.
-    @tag :skip
-    test "builds looking up for the caller process" do
-      pid = self()
+    if Version.match?(System.version(), ">= 1.8.0") do
+      test "builds looking up for the caller process" do
+        pid = self()
 
-      ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
+        ExZample.ex_zample(%{ex_zample_scope: :ex_zample})
 
-      Task.Supervisor.start_child(ExZample.TestTaskSupervisor, fn ->
-        send(pid, {:user, build(:user)})
-      end)
+        Task.Supervisor.start_child(ExZample.TestTaskSupervisor, fn ->
+          send(pid, {:user, build(:user)})
+        end)
 
-      assert_receive {:user, %User{id: 1}}
+        assert_receive {:user, %User{id: 1}}
+      end
     end
 
     test "fails with unregistered alias" do

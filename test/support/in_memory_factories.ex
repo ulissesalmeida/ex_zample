@@ -115,9 +115,9 @@ defmodule ExZample.Factories do
     defp prefix(string), do: "full-control:#{string}"
   end
 
-  sequence :user_id
+  def_sequence :user_id
 
-  sequence ex_zample: :user_id, return: &"ex_zample_user_#{&1}"
+  def_sequence ex_zample: :user_id, return: &"ex_zample_user_#{&1}"
 end
 
 defmodule ExZample.ScopedFactories do
@@ -149,7 +149,7 @@ defmodule ExZample.ScopedFactories do
     end
   end
 
-  sequence :user_id, return: &"scoped_user_#{&1}"
+  def_sequence :user_id, return: &"scoped_user_#{&1}"
 
-  sequence overridden_scope: :user_id, return: &"overridden_scope_user_#{&1}"
+  def_sequence overridden_scope: :user_id, return: &"overridden_scope_user_#{&1}"
 end

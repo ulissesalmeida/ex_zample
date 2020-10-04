@@ -52,7 +52,7 @@ defmodule MyApp.Factories do
     end
   end
 
-  sequence :user_id
+  def_sequence :user_id
 end
 
 # Don't forget to start :ex_zample app!
@@ -69,6 +69,62 @@ ExZample.build(:user)
 
 This is the basics of what you need to start using `ExZample`. The later section
 of this README we'll dig in details of how this library works.
+
+## ExZample and Ecto
+
+If your application has `ecto` as dependecy, you'll have the `ExZample.insert`
+family functions. You need to tell ExZample which module repository it should
+use. You can define and specify in many ways, here are some examples:
+
+```elixir
+defmodule MyApp.Factories do
+  # By default, all factories will use the given `ecto_repo`
+  use ExZample.DSL, ecto_repo: MyApp.Repo
+
+  alias ExZample.User
+
+  factory :user do
+    example do
+      %User{
+        first_name: "Abili De Bob",
+        age: 12,
+      }
+    end
+  end
+
+  factory :external_user do
+    example do
+      %User{
+        first_name: "External De Bob",
+        age: 12,
+      }
+    end
+
+    # You can specify a repository per factory too. It
+    # overrides the default one.
+    repo do
+      MyApp.OtherRepo
+    end
+  end
+end
+```
+
+You can also override the repo by using test tags:
+
+```elixir
+setup context do
+  ExZample.ex_zample(context)
+end
+
+@tag ex_zample_ecto_repo: MyApp.Repo
+test "does something" do
+  user = ExZample.insert(:user)
+end
+```
+
+The `ExZample.insert` family functions works simlilar as the
+`ExZample.build` ones. You'll can see a further explanation
+below.
 
 ## Building your factories
 
@@ -110,8 +166,7 @@ factories.
 
 ## Sequences
 
-Sequences are global stateful counters that you can user in your tests. You can
-define them using DSL like this:
+Sequences are global stateful counters that you can user in your tests. You can define them using DSL like this:
 
 ```elixir
 defmodule MyApp.Factories do
@@ -119,8 +174,8 @@ defmodule MyApp.Factories do
 
 # ...
 
-  sequence :order_id
-  sequence :user_email, return: &"email_#{&1}@test.test"
+  def_sequence :order_id
+  def_sequence :user_email, return: &"email_#{&1}@test.test"
 end
 ```
 
@@ -198,20 +253,25 @@ defmodule MyApp.DataCase do
 
   using do
     quote do
-      # Tells `ExZample` which scope you want to look up for your aliases
-      @moduletag ex_zample_scope: :app_a
+      @moduletag [
+        # Tells `ExZample` which scope you want to look up for your aliases
+        ex_zample_scope: :app_a,
+        # If didn't defined in factory module the repo, here
+        # you can tell `ExZample` which repo you want all tests to use
+        ex_zample_ecto_repo: MyAppA.Repo
+      ]
 
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      # import ExZample (optional, import the utility functions like `build/2`, `sequence/1`)
-
+      # (optional, import the utility functions like `build/2`, `sequence/1`)
+      import ExZample
     end
   end
 
   # Makes `ExZample` narrow the scope of aliases based on the configured tag
-  # If you have imported the `ExZample`, you can do: `setup :ex_zample`
-  setup &ExZample.ex_zample/1
+  # If you have imported the `ExZample`.
+  setup :ex_zample
 
   setup tags do
     :ok = Sandbox.checkout(Repo)
