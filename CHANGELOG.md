@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `ExZample.insert/3`
+- `ExZample.insert_pair/3`
+- `ExZample.insert_list/4`
+- `ExZample.DSL.def_sequence/2`
+
+### Deprecated
+
+- `ExZample.DSL.sequence/2`
+
 ## [0.9.0] - 2020-06-22
 
 ### Added

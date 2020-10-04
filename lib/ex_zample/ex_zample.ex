@@ -572,10 +572,10 @@ defmodule ExZample do
 
   ## Options
 
-    * `:ex_zample_scope`, the scope that ExZample should look up for aliases. If no
-    scope is defined, `:global` is the default scope.
-    * `:ex_zample_ecto_repo`, the Ecto repo that ExZample should use to run their insert
-    functions.
+  * `:ex_zample_scope`, the scope that ExZample should look up for aliases. If no
+  scope is defined, `:global` is the default scope.
+  * `:ex_zample_ecto_repo`, the Ecto repo that ExZample should use to run their insert
+  functions.
 
   This function works well with `setup/1` callback of `ExUnit` and `@tags`.
   For example:
@@ -666,25 +666,25 @@ defmodule ExZample do
 
   if Code.ensure_loaded?(Ecto.Repo) do
     @doc """
-      Inserts in the repository the example built by the `factory_or_alias` module.
+    Inserts in the repository the example built by the `factory_or_alias` module.
 
-      If the given factory exports the `c:repo/0` function it will use it call the
-      `insert!` function. Beyond that, it works similar as `build/2`.
+    If the given factory exports the `c:repo/0` function it will use it call the
+    `insert!` function. Beyond that, it works similar as `build/2`.
 
-      If will override the generated data with the given `attributes`.
+    If will override the generated data with the given `attributes`.
 
-      ## Options
+    ## Options
 
-        * `ecto_opts`, when given, it will be forwarded to the second argument of
-        `Ecto.Repo.insert/2`
+      * `ecto_opts`, when given, it will be forwarded to the second argument of
+      `Ecto.Repo.insert/2`
 
-      ## Examples
+    ## Examples
 
-          iex> ExZample.insert(:player)
-          %ExZample.RPG.Player{}
+        iex> ExZample.insert(:player)
+        %ExZample.RPG.Player{}
 
-          iex> ExZample.insert(:player, email: "testmail")
-          %ExZample.RPG.Player{email: "testmail"}
+        iex> ExZample.insert(:player, email: "testmail")
+        %ExZample.RPG.Player{email: "testmail"}
     """
     since("0.10.0")
     @spec insert(factory, Enum.t() | nil) :: struct()
@@ -740,11 +740,11 @@ defmodule ExZample do
 
     ## Examples
 
-      iex> ExZample.insert_pair(:character)
-      {%ExZample.RPG.Character{}, %ExZample.RPG.Character{}}
+        iex> ExZample.insert_pair(:character)
+        {%ExZample.RPG.Character{}, %ExZample.RPG.Character{}}
 
-      iex> ExZample.insert_pair(:character, name: "Todd")
-      {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+        iex> ExZample.insert_pair(:character, name: "Todd")
+        {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
     """
     since("0.10.0")
     @spec insert_pair(factory, Enum.t() | nil) :: {struct(), struct()}
@@ -756,8 +756,8 @@ defmodule ExZample do
 
     ## Examples
 
-      iex> ExZample.insert_pair(:character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
-      {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+        iex> ExZample.insert_pair(:character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+        {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
     """
     since("0.10.0")
     @spec insert_pair(factory, Enum.t() | nil, Keyword.t()) :: {struct(), struct()}
@@ -770,11 +770,11 @@ defmodule ExZample do
 
     ## Examples
 
-      iex> ExZample.insert_list(3, :character)
-      [%ExZample.RPG.Character{}, %ExZample.RPG.Character{}, %ExZample.RPG.Character{}]
+        iex> ExZample.insert_list(3, :character)
+        [%ExZample.RPG.Character{}, %ExZample.RPG.Character{}, %ExZample.RPG.Character{}]
 
-      iex> ExZample.insert_list(3, :character, name: "Todd")
-      [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+        iex> ExZample.insert_list(3, :character, name: "Todd")
+        [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
     """
     since("0.10.0")
     @spec insert_list(pos_integer, factory, Enum.t() | nil) :: [struct()]
@@ -790,8 +790,8 @@ defmodule ExZample do
 
     ## Examples
 
-      iex> ExZample.insert_list(3, :character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
-      [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+        iex> ExZample.insert_list(3, :character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+        [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
     """
     since("0.10.0")
     @spec insert_list(pos_integer, factory, Enum.t() | nil, Keyword.t()) :: [struct()]
