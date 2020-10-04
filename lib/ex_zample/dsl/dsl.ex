@@ -98,7 +98,12 @@ defmodule ExZample.DSL do
     {scope, name} = parse_name_and_scope(name_or_scoped_name)
 
     quote location: :keep, bind_quoted: [scope: scope, name: name, block: Macro.escape(block)] do
-      @ex_zample_factories {the_scope(scope, @ex_zample_opts), name, block}
+      @ex_zample_factories %ExZample.DSL.Factory{
+        scope: the_scope(scope, @ex_zample_opts),
+        name: name,
+        block: block,
+        ecto_repo: @ex_zample_opts[:ecto_repo]
+      }
     end
   end
 

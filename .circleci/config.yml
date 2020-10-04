@@ -13,12 +13,12 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v3-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v4-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
             - deps
             - _build
       - save_cache:
-          key: v3-deps-<< parameters.elixir_version >>
+          key: v4-deps-<< parameters.elixir_version >>
           paths:
             - deps
             - _build
@@ -30,8 +30,8 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v3-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v3-deps-<< parameters.elixir_version >>
+            - v4-deps-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v4-deps-<< parameters.elixir_version >>
 
   save_app:
     description: "Cache compiled build"
@@ -39,15 +39,15 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          key: v4-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
           paths:
             - _build/test/lib/ex_zample
       - save_cache:
-          key: v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v4-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
             - _build/test/lib/ex_zample
       - save_cache:
-          key: v3-app-<< parameters.elixir_version >>
+          key: v4-app-<< parameters.elixir_version >>
           paths:
             - _build/test/lib/ex_zample
 
@@ -58,9 +58,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
-            - v3-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v3-app-<< parameters.elixir_version >>
+            - v4-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v4-app-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v4-app-<< parameters.elixir_version >>
 
   save_plt:
     description: "Cache dialyzer plt"
@@ -68,19 +68,19 @@ commands:
       <<: *elixir_parameter
     steps:
       - save_cache:
-          key: v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+          key: v4-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
           paths:
             - plts/dialyzer.plt
             - plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
-          key: v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+          key: v4-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
           paths:
             - plts/dialyzer.plt
             - plts/dialyzer.plt.hash
             - ~/.mix
       - save_cache:
-          key: v3-plt-<< parameters.elixir_version >>
+          key: v4-plt-<< parameters.elixir_version >>
           paths:
             - plts/dialyzer.plt
             - plts/dialyzer.plt.hash
@@ -93,9 +93,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
-            - v3-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
-            - v3-plt-<< parameters.elixir_version >>
+            - v4-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}-{{ .Revision }}
+            - v4-plt-<< parameters.elixir_version >>-{{ checksum "mix.lock" }}
+            - v4-plt-<< parameters.elixir_version >>
   test:
     parameters:
       <<: *elixir_parameter
@@ -114,6 +114,11 @@ jobs:
         type: steps
     docker:
       - image: circleci/elixir:<< parameters.elixir_version >>
+      - image: circleci/postgres:12-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: ex_zample_test
+          POSTGRES_PASSWORD: postgres
     environment:
       MIX_ENV: test
     working_directory: ~/repo
