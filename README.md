@@ -14,7 +14,7 @@ by adding `ex_zample` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ex_zample, "~> 0.9.0"}
+    {:ex_zample, "~> 0.10.0"}
   ]
 end
 ```
