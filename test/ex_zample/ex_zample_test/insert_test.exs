@@ -282,6 +282,103 @@ defmodule ExZample.InsertTest do
     end
   end
 
+  describe "insert_pair/1" do
+    import ExZample, only: [insert_pair: 1]
+
+    test "inserts two records" do
+      counter = fn -> Repo.count(Player) end
+
+      assert_inc(counter,
+        by: 2,
+        do: fn ->
+          assert {%Player{}, %Player{}} = insert_pair(:player)
+        end
+      )
+    end
+  end
+
+  describe "insert_pair/2" do
+    import ExZample, only: [insert_pair: 2]
+
+    test "overrides the given attributes" do
+      counter = fn -> Repo.count(Character) end
+
+      {character_a, character_b} =
+        assert_inc(counter,
+          by: 2,
+          do: fn ->
+            assert {%Character{}, %Character{}} = insert_pair(:character, name: "Abili")
+          end
+        )
+
+      assert character_a.name == "Abili"
+      assert character_b.name == "Abili"
+    end
+
+    @tag ex_zample_ecto_repo: ExZample.MockRepo
+    test "forwards ecto opts" do
+      opts = [prefix: nil]
+      counter = fn -> Repo.count(Character) end
+
+      expect(ExZample.MockRepo, :insert!, 2, fn args, ^opts ->
+        ExZample.Repo.insert!(args, opts)
+      end)
+
+      {character_a, character_b} =
+        assert_inc(counter,
+          by: 2,
+          do: fn ->
+            assert {%Character{}, %Character{}} =
+                     insert_pair(:character, name: "Abili", ecto_opts: opts)
+          end
+        )
+
+      assert character_a.name == "Abili"
+      assert character_b.name == "Abili"
+    end
+  end
+
+  describe "insert_pair/3" do
+    import ExZample, only: [insert_pair: 3]
+
+    test "overrides the given attributes" do
+      counter = fn -> Repo.count(Character) end
+
+      {character_a, character_b} =
+        assert_inc(counter,
+          by: 2,
+          do: fn ->
+            assert {%Character{}, %Character{}} = insert_pair(:character, %{name: "Abili"}, [])
+          end
+        )
+
+      assert character_a.name == "Abili"
+      assert character_b.name == "Abili"
+    end
+
+    @tag ex_zample_ecto_repo: ExZample.MockRepo
+    test "forwards ecto opts" do
+      opts = [prefix: nil]
+      counter = fn -> Repo.count(Character) end
+
+      expect(ExZample.MockRepo, :insert!, 2, fn args, ^opts ->
+        ExZample.Repo.insert!(args, opts)
+      end)
+
+      {character_a, character_b} =
+        assert_inc(counter,
+          by: 2,
+          do: fn ->
+            assert {%Character{}, %Character{}} =
+                     insert_pair(:character, %{name: "Abili"}, ecto_opts: opts)
+          end
+        )
+
+      assert character_a.name == "Abili"
+      assert character_b.name == "Abili"
+    end
+  end
+
   def assert_inc(counter, by: increment, do: fun) do
     initial = counter.()
     result = fun.()

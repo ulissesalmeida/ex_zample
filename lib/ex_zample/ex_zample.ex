@@ -666,26 +666,26 @@ defmodule ExZample do
 
   if Code.ensure_loaded?(Ecto.Repo) do
     @doc """
-    Inserts in the repository the example built by the `factory_or_alias` module.
+      Inserts in the repository the example built by the `factory_or_alias` module.
 
-    If the given factory exports the `c:repo/0` function it will use it call the
-    `insert!` function. Beyond that, it works similar as `build/2`.
+      If the given factory exports the `c:repo/0` function it will use it call the
+      `insert!` function. Beyond that, it works similar as `build/2`.
 
-    If will override the generated data with the given `attributes`.
+      If will override the generated data with the given `attributes`.
 
-    ## Options
+      ## Options
 
-      * `ecto_opts`, when given, it will be forwarded to the second argument of
-      `Ecto.Repo.insert/2`
+        * `ecto_opts`, when given, it will be forwarded to the second argument of
+        `Ecto.Repo.insert/2`
 
-    ## Examples
+      ## Examples
 
-        iex> ExZample.insert(:player)
-        %ExZample.RPG.Player{}
+          iex> ExZample.insert(:player)
+          %ExZample.RPG.Player{}
 
-        iex> ExZample.insert(:player, email: "testmail")
-        %ExZample.RPG.Player{email: "testmail"}
-  """
+          iex> ExZample.insert(:player, email: "testmail")
+          %ExZample.RPG.Player{email: "testmail"}
+    """
     since("0.10.0")
     @spec insert(factory, Enum.t() | nil) :: struct()
     def insert(factory, attributes \\ nil)
@@ -734,6 +734,35 @@ defmodule ExZample do
       factory_module.ecto_repo() ||
         raise ArgumentError, "Your #{factory_module}.repo/0 should return a ecto Repo module"
     end
+
+    @doc """
+    Same as `insert/2`, but returns a tuple with a pair of structs.
+
+    ## Examples
+
+      iex> ExZample.insert_pair(:character)
+      {%ExZample.RPG.Character{}, %ExZample.RPG.Character{}}
+
+      iex> ExZample.insert_pair(:character, name: "Todd")
+      {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+    """
+    since("0.10.0")
+    @spec insert_pair(factory, Enum.t() | nil) :: {struct(), struct()}
+    def insert_pair(factory, attributes \\ nil),
+      do: {insert(factory, attributes), insert(factory, attributes)}
+
+    @doc """
+    Same as `insert/3`, but returns a tuple with a pair of structs.
+
+    ## Examples
+
+      iex> ExZample.insert_pair(:character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+      {%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}}
+    """
+    since("0.10.0")
+    @spec insert_pair(factory, Enum.t() | nil, Keyword.t()) :: {struct(), struct()}
+    def insert_pair(factory, attributes, opts),
+      do: {insert(factory, attributes, opts), insert(factory, attributes, opts)}
   end
 
   defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}
