@@ -1,5 +1,5 @@
 # Used by "mix format"
-sequence_dsl_format = [sequence: 1, sequence: 2]
+sequence_dsl_format = [def_sequence: 1, def_sequence: 2]
 
 [
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"],

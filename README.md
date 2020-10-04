@@ -52,7 +52,7 @@ defmodule MyApp.Factories do
     end
   end
 
-  sequence :user_id
+  def_sequence :user_id
 end
 
 # Don't forget to start :ex_zample app!
@@ -110,8 +110,7 @@ factories.
 
 ## Sequences
 
-Sequences are global stateful counters that you can user in your tests. You can
-define them using DSL like this:
+Sequences are global stateful counters that you can user in your tests. You can define them using DSL like this:
 
 ```elixir
 defmodule MyApp.Factories do
@@ -119,8 +118,8 @@ defmodule MyApp.Factories do
 
 # ...
 
-  sequence :order_id
-  sequence :user_email, return: &"email_#{&1}@test.test"
+  def_sequence :order_id
+  def_sequence :user_email, return: &"email_#{&1}@test.test"
 end
 ```
 

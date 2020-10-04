@@ -53,7 +53,7 @@ defmodule ExZample.DSL do
   @doc false
   defmacro __using__(opts \\ []) do
     quote location: :keep, bind_quoted: [opts: opts] do
-      import ExZample.DSL
+      import ExZample.DSL, except: [sequence: 2, sequence: 1]
 
       Module.register_attribute(__MODULE__, :ex_zample_factories, accumulate: true)
       Module.register_attribute(__MODULE__, :ex_zample_sequences, accumulate: true)
@@ -108,7 +108,7 @@ defmodule ExZample.DSL do
 
   ## Examples
 
-      sequence(:user_id, return: &("user_\#{&1}")
+      def_sequence(:user_id, return: &("user_\#{&1}")
 
       # later you can invoke like this:
       ExZample.sequence(:user_id)
@@ -117,9 +117,9 @@ defmodule ExZample.DSL do
   A function will be generated in the current module following the pattern:
   `{scope}_{sequence_name}_sequence`.
   """
-  since("0.7.0")
-  @spec sequence(name :: atom, return: ExZample.sequence_fun()) :: Macro.t()
-  defmacro sequence(name, return: fun) when is_atom(name) do
+  since("0.10.0")
+  @spec def_sequence(name :: atom, return: ExZample.sequence_fun()) :: Macro.t()
+  defmacro def_sequence(name, return: fun) when is_atom(name) do
     quote location: :keep,
           bind_quoted: [scope: nil, name: name, fun: Macro.escape(fun)] do
       @ex_zample_sequences {the_scope(scope, @ex_zample_opts), name, fun}
@@ -132,9 +132,9 @@ defmodule ExZample.DSL do
 
   ## Examples
 
-      sequence(:user_id)
+      def_sequence(:user_id)
 
-      sequence(scoped: :user_id, return: &"user_\#{&1}")
+      def_sequence(scoped: :user_id, return: &"user_\#{&1}")
 
       # later you can invoke like this:
 
@@ -148,10 +148,45 @@ defmodule ExZample.DSL do
   A function will be generated in the current module following the pattern:
   `{scope}_{sequence_name}_sequence`.
   """
-  since("0.7.0")
+  since("0.10.0")
 
-  @spec sequence(Keyword.t() | atom) ::
+  @spec def_sequence(Keyword.t() | atom) ::
           Macro.t()
+  defmacro def_sequence(opts_or_name) when is_atom(opts_or_name) do
+    name = opts_or_name
+
+    quote location: :keep,
+          bind_quoted: [scope: nil, name: name, fun: nil] do
+      @ex_zample_sequences {the_scope(scope, @ex_zample_opts), name, nil}
+    end
+  end
+
+  defmacro def_sequence(opts_or_name) when is_list(opts_or_name) do
+    opts = opts_or_name
+    {fun_opts, name_opts} = Keyword.split(opts, [:return])
+    {scope, name} = parse_name_and_scope(name_opts)
+
+    fun = if fun = fun_opts[:return], do: Macro.escape(fun)
+
+    quote location: :keep,
+          bind_quoted: [scope: scope, name: name, fun: fun] do
+      @ex_zample_sequences {the_scope(scope, @ex_zample_opts), name, fun}
+    end
+  end
+
+  @doc "Sames as def_sequence/2"
+  since("0.7.0")
+  @deprecated "Use def_sequence/2 instead"
+  defmacro sequence(name, return: fun) when is_atom(name) do
+    quote location: :keep,
+          bind_quoted: [scope: nil, name: name, fun: Macro.escape(fun)] do
+      @ex_zample_sequences {the_scope(scope, @ex_zample_opts), name, fun}
+    end
+  end
+
+  @doc "Sames as def_sequence/1"
+  since("0.7.0")
+  @deprecated "Use def_sequence/1 instead"
   defmacro sequence(opts_or_name) when is_atom(opts_or_name) do
     name = opts_or_name
 
