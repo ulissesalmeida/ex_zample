@@ -763,6 +763,43 @@ defmodule ExZample do
     @spec insert_pair(factory, Enum.t() | nil, Keyword.t()) :: {struct(), struct()}
     def insert_pair(factory, attributes, opts),
       do: {insert(factory, attributes, opts), insert(factory, attributes, opts)}
+
+    @doc """
+    Same as `insert/2`, but returns a list with where the size is the given
+    `count`.
+
+    ## Examples
+
+      iex> ExZample.insert_list(3, :character)
+      [%ExZample.RPG.Character{}, %ExZample.RPG.Character{}, %ExZample.RPG.Character{}]
+
+      iex> ExZample.insert_list(3, :character, name: "Todd")
+      [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+    """
+    since("0.10.0")
+    @spec insert_list(pos_integer, factory, Enum.t() | nil) :: [struct()]
+    def insert_list(count, factory, attributes \\ nil)
+    def insert_list(0, _factory, _attributes), do: []
+
+    def insert_list(count, factory, attributes) when is_greater_than_0(count),
+      do: Enum.map(1..count, fn _ -> insert(factory, attributes) end)
+
+    @doc """
+    Same as `insert/3`, but returns a list with where the size is the given
+    `count`.
+
+    ## Examples
+
+      iex> ExZample.insert_list(3, :character, %{name: "Todd"}, ecto_opts: [prefix: "private"])
+      [%ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}, %ExZample.RPG.Character{name: "Todd"}]
+    """
+    since("0.10.0")
+    @spec insert_list(pos_integer, factory, Enum.t() | nil, Keyword.t()) :: [struct()]
+    def insert_list(count, factory, attributes, opts)
+    def insert_list(0, _factory, _attributes, _opts), do: []
+
+    def insert_list(count, factory, attributes, opts) when is_greater_than_0(count),
+      do: Enum.map(1..count, fn _ -> insert(factory, attributes, opts) end)
   end
 
   defp get_config(scope), do: Application.get_env(:ex_zample, scope) || %{}

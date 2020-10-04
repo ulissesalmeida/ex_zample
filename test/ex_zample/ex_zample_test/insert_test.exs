@@ -379,6 +379,122 @@ defmodule ExZample.InsertTest do
     end
   end
 
+  describe "insert_list/2" do
+    import ExZample, only: [insert_list: 2]
+
+    test "returns empty list when count is 0" do
+      assert [] == insert_list(0, :character)
+    end
+
+    test "inserts up to given count" do
+      count = Enum.random(1..10)
+      counter = fn -> Repo.count(Character) end
+
+      list =
+        assert_inc(counter,
+          by: count,
+          do: fn ->
+            insert_list(count, :character)
+          end
+        )
+
+      assert length(list) == count
+      assert Enum.all?(list, &(%Character{} = &1))
+    end
+  end
+
+  describe "insert_list/3" do
+    import ExZample, only: [insert_list: 3]
+
+    test "returns empty list when count is 0" do
+      assert [] == insert_list(0, :character, name: "Abili")
+    end
+
+    test "overrides the given attributes" do
+      counter = fn -> Repo.count(Character) end
+      count = Enum.random(1..10)
+
+      list =
+        assert_inc(counter,
+          by: count,
+          do: fn ->
+            insert_list(count, :character, name: "Abili")
+          end
+        )
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1.name == "Abili"))
+    end
+
+    @tag ex_zample_ecto_repo: ExZample.MockRepo
+    test "forwards ecto opts" do
+      opts = [prefix: nil]
+      counter = fn -> Repo.count(Character) end
+      count = Enum.random(1..10)
+
+      expect(ExZample.MockRepo, :insert!, count, fn args, ^opts ->
+        ExZample.Repo.insert!(args, opts)
+      end)
+
+      list =
+        assert_inc(counter,
+          by: count,
+          do: fn ->
+            insert_list(count, :character, name: "Abili", ecto_opts: opts)
+          end
+        )
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1.name == "Abili"))
+    end
+  end
+
+  describe "insert_list/4" do
+    import ExZample, only: [insert_list: 4]
+
+    test "returns empty list when count is 0" do
+      assert [] == insert_list(0, :character, %{name: "Abili"}, [])
+    end
+
+    test "overrides the given attributes" do
+      counter = fn -> Repo.count(Character) end
+      count = Enum.random(1..10)
+
+      list =
+        assert_inc(counter,
+          by: count,
+          do: fn ->
+            insert_list(count, :character, %{name: "Abili"}, [])
+          end
+        )
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1.name == "Abili"))
+    end
+
+    @tag ex_zample_ecto_repo: ExZample.MockRepo
+    test "forwards ecto opts" do
+      opts = [prefix: nil]
+      counter = fn -> Repo.count(Character) end
+      count = Enum.random(1..10)
+
+      expect(ExZample.MockRepo, :insert!, count, fn args, ^opts ->
+        ExZample.Repo.insert!(args, opts)
+      end)
+
+      list =
+        assert_inc(counter,
+          by: count,
+          do: fn ->
+            insert_list(count, :character, %{name: "Abili"}, ecto_opts: opts)
+          end
+        )
+
+      assert length(list) == count
+      assert Enum.all?(list, &(&1.name == "Abili"))
+    end
+  end
+
   def assert_inc(counter, by: increment, do: fun) do
     initial = counter.()
     result = fun.()
