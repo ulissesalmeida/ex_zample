@@ -8,7 +8,11 @@ defmodule ExZample.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {DynamicSupervisor, name: ExZample.SequenceSupervisor, strategy: :one_for_one},
+      {DynamicSupervisor,
+       name: ExZample.SequenceSupervisor,
+       strategy: :one_for_one,
+       max_restarts: 100,
+       max_seconds: 1},
       {Registry,
        name: ExZample.SequenceRegistry, keys: :unique, partitions: System.schedulers_online()}
     ]
