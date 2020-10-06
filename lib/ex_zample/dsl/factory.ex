@@ -44,7 +44,7 @@ defmodule ExZample.DSL.Factory do
 
   defp convert_dsl({:example, _context, [[do: block]]}, stats) do
     ast =
-      quote location: :keep do
+      quote do
         @impl ExZample
         def example do
           unquote(block)
@@ -56,7 +56,7 @@ defmodule ExZample.DSL.Factory do
 
   defp convert_dsl({:example, _context, [args, [do: block]]}, stats) do
     ast =
-      quote location: :keep do
+      quote do
         @impl ExZample
         def example(unquote(args)) do
           unquote(block)
@@ -68,7 +68,7 @@ defmodule ExZample.DSL.Factory do
 
   defp convert_dsl({:ecto_repo, _context, [[do: block]]}, stats) do
     ast =
-      quote location: :keep do
+      quote do
         @impl ExZample
         def ecto_repo do
           unquote(block)
