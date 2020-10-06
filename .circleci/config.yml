@@ -5,7 +5,7 @@ aliases:
     elixir_version:
       description: "Elixir version"
       type: string
-      default: "1.10"
+      default: "1.11"
 commands:
   save_deps:
     description: "Cache dependencies"
@@ -137,7 +137,7 @@ workflows:
   test:
     jobs:
       - build:
-          name: "Elixir 1.10"
+          name: "Elixir 1.11"
           steps:
             - restore_app
             - run: mix format --check-formatted
@@ -148,6 +148,12 @@ workflows:
             - run: mix dialyzer --plt
             - save_plt
             - run: mix dialyzer
+      - build:
+          name: "Elixir 1.10"
+          elixir_version: "1.10"
+          steps:
+            - test:
+                elixir_version: "1.10"
       - build:
           name: "Elixir 1.9"
           elixir_version: "1.9"
