@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2020-10-06
+
+- Fix compile time error message by [feliperenan](https://github.com/feliperenan)
+- Fix a single sequence bringing down the whole sequences registry
+
 ## [0.10.0] - 2020-10-04
 
 ### Added

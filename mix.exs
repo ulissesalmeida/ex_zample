@@ -4,7 +4,7 @@ defmodule ExZample.MixProject do
   def project do
     [
       app: :ex_zample,
-      version: "0.10.0",
+      version: "0.10.1",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       description: description(),
@@ -82,7 +82,7 @@ defmodule ExZample.MixProject do
   def docs do
     [
       source_url: "https://github.com/ulissesalmeida/ex_zample",
-      extras: ["README.md"]
+      extras: ["README.md", "CHANGELOG.md"]
     ]
   end
 
