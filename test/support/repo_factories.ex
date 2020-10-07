@@ -83,9 +83,11 @@ defmodule ExZample.Factories.RPG do
 
   def_sequence :class_names,
     return: fn index ->
-      stream = Stream.cycle(~w(Barbarian Bard Cleric Druid Fighter Ranger Rogue
-    Sorcerer Warlock Wizard))
-      Enum.at(stream, index)
+      class_names = ~w(Barbarian Bard Cleric Druid Fighter Ranger Rogue Sorcerer Warlock Wizard)
+
+      class_names
+      |> Stream.cycle()
+      |> Enum.at(index)
     end
 
   factory :attributes do

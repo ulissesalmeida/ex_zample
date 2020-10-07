@@ -567,7 +567,7 @@ defmodule ExZample do
     do: {params_for(factory, attrs), params_for(factory, attrs)}
 
   @doc """
-  Utiliy function that you can define severial settings that `ExZample` will look
+  Utiliy function that you can define several settings that `ExZample` will look
   for before executing their functions.
 
   ## Options
@@ -732,7 +732,7 @@ defmodule ExZample do
         end
 
       factory_module.ecto_repo() ||
-        raise ArgumentError, "Your #{factory_module}.repo/0 should return a ecto Repo module"
+        raise ArgumentError, "Your #{factory_module}.repo/0 should return an ecto Repo module"
     end
 
     @doc """
