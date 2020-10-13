@@ -97,10 +97,12 @@ defmodule ExZample.Manifest do
 
   @doc false
   def persist!(file, manifest) do
-    if manifest.aliases == %{} do
+    if empty_manifest?(manifest) do
       File.rm(file)
     else
       write_manifest!(file, manifest)
     end
   end
+
+  defp empty_manifest?(manifest), do: manifest == %{aliases: %{}, sequences: %{}}
 end

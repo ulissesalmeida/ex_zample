@@ -111,6 +111,10 @@ defmodule ExZample.DSLTest do
       assert 1 == sequence(:user_id)
     end
 
+    test "files only with sequences are loaded" do
+      assert 1 == sequence(:only_sequences_file)
+    end
+
     @tag ex_zample_scope: :ex_zample
     test "generates scoped sequences" do
       assert "ex_zample_user_1" == sequence(:user_id)
