@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.2] - 2020-10-13
+
+### Fixed
+
+- Fix accidental removal of manifests of files that has only with sequences defined
+
 ## [0.10.1] - 2020-10-06
+
+### Fixed
 
 - Fix compile time error message by [feliperenan](https://github.com/feliperenan)
 - Fix a single sequence bringing down the whole sequences registry

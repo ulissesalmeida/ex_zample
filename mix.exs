@@ -4,7 +4,7 @@ defmodule ExZample.MixProject do
   def project do
     [
       app: :ex_zample,
-      version: "0.10.1",
+      version: "0.10.2",
       elixir: "~> 1.6",
       start_permanent: Mix.env() == :prod,
       description: description(),
